@@ -1,147 +1,87 @@
-import csv
-import json
-import numpy as np
-from scipy.misc import imread, imresize
-import matplotlib.pyplot as plt
-import cv2 as ocv
-import itertools
+from config import *
 
-np.set_printoptions(threshold='nan')
 
-class Picture:
-    def __init__(self, rights, lefts):
-        # type: (object, object) -> object
-        self.rights = rights
-        self.lefts = lefts
+def populate_probes(probes):
+    for probe_id in probes:
+        probe = probes[probe_id]
+        curr = probe.products
+        n = len(curr)
+        rights = np.zeros((n, n))
+        for i in range(0, n):
+            meee = curr[i]
+            for j in range(0, n):
+                otherrrr = curr[j]
+                rights[i][j] = is_on_right(meee, otherrrr)
+        probe.rights = rights
+        probe.lefts = rights.transpose()
 
-    def set_rights(self, rights):
-        self.rights = rights
 
-    def set_lefts(self, lefts):
-        self.lefts = lefts
-
-class Example:
-    # id = 0
-    # brand_code = 0
-    # brand_label = 0
-    # form_factor_label = 0
-    # mask = 0
-    # object_label = 0
-    # patch_id = 0
-    # patch_url = 0
-    # probe_id = 0
-    # product_label = 0
-    # voting_confidence = 0
-
-    def __init__(self, id, brand_code, brand_label, form_factor_label, mask, object_label, patch_id, patch_url,
-                 probe_id,
-                 product_label, voting_confidence):
-        self.id = id
-        self.brand_code = brand_code
-        self.brand_label = brand_label
-        self.form_factor_label = form_factor_label
-        mask = mask.replace('\'', '\"')
-        self.mask = mask  # TODO: convert to json
-        self.object_label = object_label
-        self.patch_id = patch_id
-        self.patch_url = patch_url
-        self.probe_id = probe_id
-        self.product_label = product_label
-        voting_confidence = voting_confidence.replace('\'', '\"')
-        voting_confidence = voting_confidence.replace('u', '')
-        self.voting_confidence = voting_confidence  # TODO: convert to json
-
-    def get_coordinates(self):
-        js = json.loads(self.mask)
-        return js
-
-    def get_voting_confidence(self):
-        js = json.loads(self.voting_confidence)
-        return js
-
-    def get_image(self):
-        image_path = "../CSV/Probes/" + self.probe_id + ".jpg"
-        coords = self.get_coordinates()
-        x1 = coords["x1"]
-        x2 = coords["x2"]
-        y1 = coords["y1"]
-        y2 = coords["y2"]
-        img = ocv.imread(image_path)
-        # ocv.imshow("original",img)
-        cropped = img[y1:y2, x1:x2]
-        # ocv.imshow("cropped", cropped)
-        return cropped
-
-    def write_image(self):
-        cropped = self.get_image()
-        ocv.imwrite("../CSV/bottles/" + self.patch_url, cropped)
+def show_product_image(window_name,product_list, probe_id,product_index):
+    x = product_list[probe_id][product_index].features
+    ocv.imshow(window_name,x)
+    ocv.waitKey(0)  # show plots
 
 
 def is_on_right(me, other):
     if me == other:
         return False
-    my_coords = me.get_coordinates()
-    other_coodrds = other.get_coordinates()
+    my_coords = me.mask
+    other_coodrds = other.mask
     my_width = my_coords["x2"]-my_coords["x1"]
     delta_x = np.abs(my_coords["x2"] - other_coodrds["x1"])
     delta_y = np.abs(my_coords["y2"] - other_coodrds["y2"])
     my_height = my_coords["y2"] - my_coords["y1"]
-    if delta_x <= 0.5 * my_width and delta_y <= 0.5 * my_height:
+    if delta_x <= gap_ratio_x * my_width and delta_y <= gap_ratio_y * my_height:
         return True
     else:
         return False
 
 
 def import_data():
-    my_list = {}
-    my_pics = {}
-    with open('../CSV/data.csv', 'r') as f:
+    probes = {}
+    sample_types = {
+        "train": [],
+        "valid": [],
+        "test": []
+    }
+    probes_ids = glob.glob(probes_dir + "*.jpg")
+    for i in range(0, len(probes_ids)):
+        feats = ocv.imread(probes_ids[i])
+        probes_ids[i] = probes_ids[i].strip(probes_dir)
+        probes_ids[i] = probes_ids[i].strip(".jpg")
+        probes[probes_ids[i]] = Probe(probes_ids[i], feats)
+    with open(csv_path, 'r') as f:
         lines = itertools.islice(f, 1, None)
         reader = csv.reader(lines)
         for row in reader:
-            ex = Example(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
-            my_list[ex.probe_id] = []
-            my_pics[ex.probe_id] = {}
-        f.seek(0)
-        lines = itertools.islice(f, 1, None)
-        reader = csv.reader(lines)
-        for row in reader:
-            ex = Example(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
-            my_list[ex.probe_id].append(ex)
+            product = Product(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11],probes[row[9]])
+            probes[product.probe_id].products.append(product)
+            sample_types[product.sample_type].append(product.id)
+    return {
+        "probes": probes,
+        "train": sample_types["train"],
+        "valid": sample_types["valid"],
+        "test": sample_types["test"]
+    }
 
-    return {"list": my_list, "pics": my_pics}
+raw_data = import_data()
+probes = raw_data["probes"]
+print raw_data
+print probes['10521992'].products[0].features.shape
+print probes['10521992'].products[0].product_label
+# products = raw_data["products"]
+# probes = raw_data["probes"]
+# # show_product_image("noam", products, '10521992', 2)
+#
+# print 2
 
-
-tmp = import_data()
-li = tmp["list"]
-pics = tmp["pics"]
-# print li[0].mask
-# print li[2].voting_confidence
-# print li[2].get_coordinates()
-# print li[2].get_voting_confidence()
-
-# print li[15].get_image()
-ocv.waitKey(0)  # show plots
-# for ex in li:
-#     ex.write_image()
-num_of_pics = len(li)
-for probe_id in li:
-    curr = li[probe_id]
-    n = len(curr)
-    # print probe_id
-    # print n
-    Rights = np.zeros((n, n))
-    for i in range(0, n):
-        meee = curr[i]
-        for j in range(0, n):
-            otherrrr = curr[j]
-            Rights[i][j] = is_on_right(meee, otherrrr)
-    pics[probe_id] = Picture(Rights, np.transpose(Rights))
-print pics["10497567"].rights
-print "=========================================================="
-print pics["10497567"].lefts
-
-# print Right
-# print Right.shape
-# print np.sum(Right)
-# print is_on_right(li[30], li[31])
+all_labels = []
+all_features = []
+for probe_id in probes:
+    probe = probes[probe_id]
+    for product in probe.products:
+        all_labels.append(product.product_label)
+        all_features.append(product.features)
+print all_labels
+print all_features
+populate_probes(probes)

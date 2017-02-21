@@ -1,0 +1,13 @@
+General:
+    make classes:
+        Bottle
+        Probe
+        Shelf??
+        Triplet
+     update classes:
+
+CSV import:
+    refactoring
+    combine classes
+    db-scan
+
