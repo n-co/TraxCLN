@@ -5,9 +5,11 @@ General:
         Shelf??
         Triplet
      update classes:
+   figure out why movie lens had 3 relations.
 
 CSV import:
     refactoring
     combine classes
     db-scan
+    when reading dasta it is read as string. i costructor we need to cast.
 

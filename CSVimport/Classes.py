@@ -1,3 +1,4 @@
+#from config import *
 import config as conf
 import json
 import cv2 as ocv
@@ -38,6 +39,24 @@ class Product:
         self.voting_confidence = json.loads(voting_confidence)  # TODO: convert to json
         self.probe_obj = probe_obj
         self.features = populate_features(self)
+        self.relations = [[], []]
+        self.index_in_probe = -1
+
+    def build_relations(self):
+        probe_obj = self.probe_obj
+        rights_matrix = probe_obj.rights
+        lefts_matrix = probe_obj.lefts
+        products = probe_obj.products
+        my_index = self.index_in_probe
+
+        for j in range(0, len(products)):
+            if rights_matrix[my_index][j] == 1:
+                self.relations[conf.rel_right].append(products[j].id)
+
+        for j in range(0, len(products)):
+            if lefts_matrix[my_index][j] == 1:
+                self.relations[conf.rel_left].append(products[j].id)
+
 
 def populate_features(self):
     probe_path = conf.probes_dir + self.probe_id + ".jpg"

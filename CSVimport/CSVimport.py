@@ -1,8 +1,24 @@
 from config import *
 
+def make_feats_and_labels(probes):
+    labels = []
+    feats = []
+    rel_list = [None] * csv_length
+    ids = []
+    for probe_id in probes:
+        probe = probes[probe_id]
+        for product in probe.products:
+            product.build_relations()
+            labels.append(product.product_label)
+            feats.append(product.features)
+            rel_list[int(product.id)] = product.relations
+            ids.append(product.id)
+    return ids,feats, labels, rel_list
+
 
 def populate_probes(probes):
     for probe_id in probes:
+        print probe_id
         probe = probes[probe_id]
         curr = probe.products
         n = len(curr)
@@ -16,8 +32,8 @@ def populate_probes(probes):
         probe.lefts = rights.transpose()
 
 
-def show_product_image(window_name,product_list, probe_id,product_index):
-    x = product_list[probe_id][product_index].features
+def show_product_image(window_name,probes, probe_id, product_index):
+    x = probes[probe_id].products[product_index].features
     ocv.imshow(window_name,x)
     ocv.waitKey(0)  # show plots
 
@@ -50,11 +66,16 @@ def import_data():
         probes_ids[i] = probes_ids[i].strip(probes_dir)
         probes_ids[i] = probes_ids[i].strip(".jpg")
         probes[probes_ids[i]] = Probe(probes_ids[i], feats)
+        probes_ids[i] = int(probes_ids[i])
+
+    probes_ids.sort()
+    print probes_ids
     with open(csv_path, 'r') as f:
         lines = itertools.islice(f, 1, None)
         reader = csv.reader(lines)
         for row in reader:
-            product = Product(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11],probes[row[9]])
+            product = Product(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], probes[row[9]])
+            product.index_in_probe = len(probes[product.probe_id].products)
             probes[product.probe_id].products.append(product)
             sample_types[product.sample_type].append(product.id)
     return {
@@ -65,23 +86,21 @@ def import_data():
     }
 
 raw_data = import_data()
+train_ids = raw_data["train"]
+valid_ids = raw_data["valid"]
+test_ids = raw_data["test"]
 probes = raw_data["probes"]
-print raw_data
-print probes['10521992'].products[0].features.shape
-print probes['10521992'].products[0].product_label
-# products = raw_data["products"]
-# probes = raw_data["probes"]
-# # show_product_image("noam", products, '10521992', 2)
-#
-# print 2
 
-all_labels = []
-all_features = []
-for probe_id in probes:
-    probe = probes[probe_id]
-    for product in probe.products:
-        all_labels.append(product.product_label)
-        all_features.append(product.features)
-print all_labels
-print all_features
+
 populate_probes(probes)
+ids, feats, labels, rel_list = make_feats_and_labels(probes)
+print ids
+print len(rel_list)
+print rel_list[30]
+print rel_list[31]
+
+
+print probes['9816481'].products[5].patch_url
+print probes['9816481'].products[5].relations
+
+
