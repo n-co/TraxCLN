@@ -28,3 +28,7 @@ Training the first label of BoW_movielens in full-batch mode:
 Training pubmed dataset in mini-batch mode:
   cd mini_batch
   python training.py -model Highway -data pubmed -dim 40 -layers 10 -nmean 2 -batch 100
+
+
+Training trax dataset in mini-batch mode:
+  python training.py -model Hightway -data trax -nmean 2 -batch 3

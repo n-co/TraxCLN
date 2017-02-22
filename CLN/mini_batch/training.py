@@ -2,6 +2,7 @@ import numpy
 import sys
 import time
 import prepare_data
+from config import *
 args = prepare_data.arg_passing(sys.argv)
 seed = args['-seed']
 numpy.random.seed(seed)
@@ -18,8 +19,10 @@ if 'pubmed' in dataset:
     task = 'pubmed'
 elif 'movie' in dataset:
     task = 'movie'
+elif 'trax' in dataset:
+    task = 'trax'
 
-dataset = '../data/' + dataset + '.pkl.gz'
+dataset = data_sets_dir + dataset + '.pkl.gz'
 modelType = args['-model']
 n_layers, dim = args['-nlayers'], args['-dim']
 shared = args['-shared']
@@ -30,7 +33,6 @@ yidx = args['-y']
 if 'dr' in args['-reg']: dropout = True
 else: dropout = False
 feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = prepare_data.load_data(dataset)
-print len(train_ids), len(valid_ids), len(test_ids)
 labels = labels.astype('int64')
 if task == 'movie':
     labels = labels[:, yidx]
