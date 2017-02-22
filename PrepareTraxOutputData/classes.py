@@ -44,8 +44,8 @@ class Product:
 
         self.path = conf.products_dir + patch_url + ".jpg"
         self.features = populate_features(self)
-        self.relations = np.zeros(2, dtype=type(np.ndarray))
-
+        # self.relations = np.empty([2, 0], dtype=type(np.ndarray))
+        self.relations = [[],[]]        # print self.relations
         self.index_in_probe = -1
 
     def build_relations(self):
@@ -57,13 +57,13 @@ class Product:
 
         for j in range(0, len(products)):
             if rights_matrix[my_index][j] == 1:
-                # self.relations[conf.rel_right].append(products[j].id)
-                self.relations[conf.rel_right] = np.append(self.relations[conf.rel_right], products[j].id)
+                self.relations[conf.rel_right].append(products[j].id)
+                # self.relations[conf.rel_right] = np.append(self.relations[conf.rel_right], products[j].id)
 
         for j in range(0, len(products)):
             if lefts_matrix[my_index][j] == 1:
-                # self.relations[conf.rel_left].append(products[j].id)
-                self.relations[conf.rel_left] = np.append(self.relations[conf.rel_left], products[j].id)
+                self.relations[conf.rel_left].append(products[j].id)
+                # self.relations[conf.rel_left] = np.append(self.relations[conf.rel_left], products[j].id)
 
 
 def populate_features(self):

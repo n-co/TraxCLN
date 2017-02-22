@@ -57,7 +57,11 @@ def load_data(path):
     f = gzip.open(path, 'rb')
     feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
     rel_list, rel_mask = create_mask(rel_list)
-
+    print "rr"
+    print type(rel_list)
+    print type(rel_list[0])
+    print type(rel_list[0][0])
+    print type(rel_list[0][0][0])
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
 
 class MiniBatchIds():

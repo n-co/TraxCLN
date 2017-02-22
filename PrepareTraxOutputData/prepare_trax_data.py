@@ -29,6 +29,8 @@ def make_feats_and_labels(probes):
         probe = probes[probe_id]
         for product in probe.products:
             product.build_relations()
+            product.relations = np.array(product.relations)
+            print product.relations
             labels[product.id] = product.brand_label  # product.product_label  # TODO: for now we took the brand_label which is an integer
             feats[product.id] = product.features
             rel_list[product.id] = product.relations
@@ -118,4 +120,9 @@ ids, feats, labels, rel_list = make_feats_and_labels(probes)
 compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids)
 
 feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")
-print feats[0].shape
+
+print "rr"
+print type(rel_list)
+print type(rel_list[0])
+print type(rel_list[0][0])
+print type(rel_list[0][0][0])
