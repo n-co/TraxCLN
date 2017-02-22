@@ -56,11 +56,6 @@ def create_mask(rel_list):
 def load_data(path):
     f = gzip.open(path, 'rb')
     feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
-
-    print rel_list[10405]
-
-
-
     rel_list, rel_mask = create_mask(rel_list)
 
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids

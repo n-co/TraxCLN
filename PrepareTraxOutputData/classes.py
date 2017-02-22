@@ -2,15 +2,18 @@
 import config as conf
 import json
 import cv2 as ocv
+import numpy as np
 
 
 class Probe:
-    def __init__(self, probe_id, features):
+    def __init__(self, probe_id):
         self.id = probe_id
-        self.features = features
+        self.path = conf.probes_dir + probe_id + ".jpg"
+        self.features = ocv.imread(self.path)
+
         self.rights = None
         self.lefts = None
-        self.products = []
+        self.products = np.array([])
 
     def set_rights(self, rights):
         self.rights = rights
@@ -20,12 +23,12 @@ class Probe:
 
 
 class Product:
-    def __init__(self, id, brand_code,sample_type, brand_label, form_factor_label, mask, object_label, patch_id, patch_url,
-                 probe_id, product_label, voting_confidence,probe_obj ):
-        self.id = id
+    def __init__(self, id, brand_code, sample_type, brand_label, form_factor_label, mask, object_label, patch_id, patch_url,
+                 probe_id, product_label, voting_confidence, probe_obj ):
+        self.id = int(id)
         self.brand_code = brand_code
         self.sample_type = sample_type
-        self.brand_label = brand_label
+        self.brand_label = int(brand_label)
         self.form_factor_label = form_factor_label
         mask = mask.replace('\'', '\"')  # fix json string
         self.mask = json.loads(mask)
@@ -38,8 +41,11 @@ class Product:
         voting_confidence = voting_confidence.replace('u', '')
         self.voting_confidence = json.loads(voting_confidence)  # TODO: convert to json
         self.probe_obj = probe_obj
+
+        self.path = conf.products_dir + patch_url + ".jpg"
         self.features = populate_features(self)
-        self.relations = [[], []]
+        self.relations = np.zeros(2, dtype=type(np.ndarray))
+
         self.index_in_probe = -1
 
     def build_relations(self):
@@ -51,11 +57,13 @@ class Product:
 
         for j in range(0, len(products)):
             if rights_matrix[my_index][j] == 1:
-                self.relations[conf.rel_right].append(products[j].id)
+                # self.relations[conf.rel_right].append(products[j].id)
+                self.relations[conf.rel_right] = np.append(self.relations[conf.rel_right], products[j].id)
 
         for j in range(0, len(products)):
             if lefts_matrix[my_index][j] == 1:
-                self.relations[conf.rel_left].append(products[j].id)
+                # self.relations[conf.rel_left].append(products[j].id)
+                self.relations[conf.rel_left] = np.append(self.relations[conf.rel_left], products[j].id)
 
 
 def populate_features(self):
@@ -67,6 +75,7 @@ def populate_features(self):
     # img = ocv.imread(probe_path)
     img = self.probe_obj.features
     cropped = img[y1:y2, x1:x2]
+    cropped = ocv.resize(cropped, conf.product_hw)  # resize image
 
     return cropped
 

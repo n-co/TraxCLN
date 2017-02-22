@@ -13,3 +13,9 @@ CSV import:
     db-scan
     when reading dasta it is read as string. i costructor we need to cast.
 
+
+  make cpickle faster
+
+  should we preprocees data? PCA? etc..
+  img sizes.
+

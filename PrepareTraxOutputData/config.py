@@ -1,4 +1,4 @@
-from Classes import *
+from classes import *
 import csv
 import json
 from scipy.misc import imread, imresize
@@ -7,13 +7,18 @@ import cv2 as ocv
 import itertools
 import numpy as np
 import glob
-
+import cPickle
+import gzip
+import pickle
 
 csv_path = "../TraxInputData/data.csv"
 probes_dir = "../TraxInputData/Probes/"
 products_dir = "../TraxInputData/Products/"
+pickle_path = "../TraxOutputData/data/trax.pkl"
 
-csv_length = 240
+product_hw = (100,100)
+
+csv_length = -1
 
 gap_ratio_x = 0.5
 gap_ratio_y = 0.5
