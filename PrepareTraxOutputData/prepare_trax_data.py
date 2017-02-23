@@ -23,15 +23,15 @@ def load_data(path):
 
 def make_feats_and_labels(probes):
     ids = np.zeros(csv_length,dtype=int)
-    labels = np.zeros(csv_length,dtype=str)
-    feats = np.zeros(csv_length,dtype=type(np.ndarray))
+    labels = np.zeros(csv_length,dtype=int)
+    feats = np.zeros((csv_length,product_size),dtype=type(np.ndarray))
     rel_list = np.zeros(csv_length,dtype=type(np.ndarray))
     for probe_id in probes:
         probe = probes[probe_id]
         for product in probe.products:
             # product.build_relations()
             product.relations = np.array(product.relations)
-            print "product #" + str(product.id) + ": " + str(product.relations[rel_left]) + str(product.relations[rel_right])
+            # print "product #" + str(product.id) + ": " + str(product.relations[rel_left]) + str(product.relations[rel_right])
             labels[product.id] = product.brand_label  # product.product_label  # TODO: for now we took the brand_label which is an integer
             feats[product.id] = product.features
             rel_list[product.id] = product.relations
@@ -89,9 +89,9 @@ def import_data():
     global csv_length  # declare that the global variable will be changed
     probes = {}
     sample_types = {
-        "train": [],
-        "valid": [],
-        "test": []
+        "train": np.array([],dtype=int),
+        "valid": np.array([],dtype=int),
+        "test": np.array([],dtype=int)
     }
     probes_ids = glob.glob(probes_dir + "*.jpg")
     for i in range(0, len(probes_ids)):
@@ -127,9 +127,3 @@ ids, feats, labels, rel_list = make_feats_and_labels(probes)
 compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids)
 
 feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")
-
-# print "rr"
-# print type(rel_list)
-# print type(rel_list[0])
-# print type(rel_list[0][0])
-# print type(rel_list[0][0][0])

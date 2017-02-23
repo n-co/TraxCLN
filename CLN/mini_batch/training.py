@@ -89,6 +89,7 @@ mini_batch_gen = prepare_data.MiniBatchIds(len(train_ids), batch_size=batch_size
 n_batchs = len(train_ids) // batch_size
 if len(train_ids) % batch_size > 0: n_batchs += 1
 
+
 valid_x, valid_y = feats[valid_ids], labels[valid_ids]
 test_x, test_y = feats[test_ids], labels[test_ids]
 

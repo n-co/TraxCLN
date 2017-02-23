@@ -17,7 +17,9 @@ probes_dir = "../TraxInputData/Probes/"
 products_dir = "../TraxInputData/Products/"
 pickle_path = "../TraxOutputData/data/trax.pkl"
 
-product_hw = (100, 100)
+product_hw = (15, 15)
+number_of_channels = 3
+product_size = product_hw[0]*product_hw[1]*number_of_channels
 
 csv_length = -1
 
@@ -46,8 +48,10 @@ rel_left = 0
 rel_right = 1
 
 
-# np.set_printoptions(threshold='nan')  # show big matrix
+
+
 
 # commands
 # f.seek(0)
 # show_product_image("noam", probes, '10521992', 2)
+# img = ocv.imread(probe_path)
