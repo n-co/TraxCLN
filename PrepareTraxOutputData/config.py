@@ -28,7 +28,7 @@ eps = 300  # max distance between adjacent products
 
 
 def sort_key(product):
-    # sort_key pf a product in s "shelf"
+    # sort_key of a product in a "shelf"
     return (product.mask["x1"] + product.mask["x2"]) / 2
 
 
