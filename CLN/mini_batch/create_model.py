@@ -1,3 +1,4 @@
+from config import *
 import numpy
 #from theano import tensor
 import tensorflow as tensor
@@ -10,6 +11,7 @@ from sklearn import metrics
 from keras.constraints import *
 from keras.layers.advanced_activations import *
 from graph_layers import *
+
 
 class SaveResult(Callback):
     '''
@@ -118,8 +120,8 @@ class LRScheduler(Callback):
         self.n_epoch = n_epoch
 
     def on_epoch_begin(self, epoch, logs={}):
-        assert hasattr(self.model.optimizer, 'lr'), \
-            'Optimizer must have a "lr" attribute.'
+        assert hasattr(self.model.optimizer, 'learning_rate'), \
+            'Optimizer must have a "learning_rate" attribute.'
 
         if self.n_epoch == 0:
             self.n_epoch = self.max_epoch
