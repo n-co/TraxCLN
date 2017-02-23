@@ -159,7 +159,7 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
     n_classes = abs(n_classes)
     init = 'glorot_normal'
 
-    trans_bias = - n_layers * 0.1
+    trans_bias = - n_layers * bias_factor
 
     shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                                   init=init, activation=act, transform_bias=trans_bias)
@@ -175,14 +175,14 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
                 for i in range(n_layers)]
 
     hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
-    if dropout: hidd_nodes = Dropout(0.5)(hidd_nodes)
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     for i in range(n_layers):
         hidd_nodes = highway(shared)([hidd_nodes, contexts[i]])
         if shared == 0 and i % 5 == 2:
-            hidd_nodes = Dropout(0.5)(hidd_nodes)
+            hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
-    if dropout: hidd_nodes = Dropout(0.5)(hidd_nodes)
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
     top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
     top_nodes = Activation(activation=top_act)(top_nodes)
 
@@ -201,12 +201,12 @@ def create_dense(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, sha
                 for i in range(n_layers)]
 
     hidd_nodes = Dense(input_dim=input_dim, output_dim=hidden_dim, init=init, activation=act)(inp_nodes)
-    if dropout: hidd_nodes = Dropout(0.5)(hidd_nodes)
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     for i in range(n_layers):
         hidd_nodes = GraphDense(input_dim=hidden_dim, output_dim=hidden_dim, init=init,
                                 n_rel=n_rel, mean=nmean, activation=act)([hidd_nodes, contexts[i]])
-        if dropout: hidd_nodes = Dropout(0.5)(hidd_nodes)
+        if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
     top_nodes = Activation(activation=top_act)(top_nodes)
@@ -220,7 +220,7 @@ def create_highway_noRel(n_layers, hidden_dim, input_dim, n_classes, shared=1, d
     n_classes = abs(n_classes)
     init = 'glorot_normal'
 
-    trans_bias = - n_layers * 0.1
+    trans_bias = - n_layers * bias_factor
 
     shared_highway = Highway(input_dim=hidden_dim, init=init, activation=act, transform_bias=trans_bias)
 
@@ -231,15 +231,53 @@ def create_highway_noRel(n_layers, hidden_dim, input_dim, n_classes, shared=1, d
     #x, rel, rel_mask
     inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
     hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
-    if dropout: hidd_nodes = Dropout(0.5)(hidd_nodes)
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     for i in range(n_layers):
         hidd_nodes = highway(shared)(hidd_nodes)
 
-    if dropout: hidd_nodes = Dropout(0.5)(hidd_nodes)
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
     top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
     top_nodes = Activation(activation=top_act)(top_nodes)
 
     model = Model(input=inp_nodes, output=[top_nodes])
+
+    return model
+
+
+def create_hcnn(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
+    act = 'relu'
+    top_act = 'softmax' if n_classes > 1 else 'sigmoid'
+    n_classes = abs(n_classes)
+    init = 'glorot_normal'
+
+    trans_bias = - n_layers * bias_factor
+
+    shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                                  init=init, activation=act, transform_bias=trans_bias)
+
+    def highway(shared):
+        if shared == 1: return shared_highway
+        return GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                            init=init, activation=act, transform_bias=trans_bias)
+
+    #x, rel, rel_mask
+    inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
+    contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
+                for i in range(n_layers)]
+
+    hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+
+    for i in range(n_layers):
+        hidd_nodes = highway(shared)([hidd_nodes, contexts[i]])
+        if shared == 0 and i % 5 == 2:
+            hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+
+    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+    top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
+    top_nodes = Activation(activation=top_act)(top_nodes)
+
+    model = Model(input=[inp_nodes] + contexts, output=[top_nodes])
 
     return model
