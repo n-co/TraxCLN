@@ -1,4 +1,5 @@
 from config import *
+from dbscan import dbscan
 
 
 def compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids):
@@ -28,9 +29,9 @@ def make_feats_and_labels(probes):
     for probe_id in probes:
         probe = probes[probe_id]
         for product in probe.products:
-            product.build_relations()
+            # product.build_relations()
             product.relations = np.array(product.relations)
-            print product.relations
+            print "product #" + str(product.id) + ": " + str(product.relations[rel_left]) + str(product.relations[rel_right])
             labels[product.id] = product.brand_label  # product.product_label  # TODO: for now we took the brand_label which is an integer
             feats[product.id] = product.features
             rel_list[product.id] = product.relations
@@ -42,16 +43,25 @@ def populate_probes(probes):
     for probe_id in probes:
         # print probe_id
         probe = probes[probe_id]
+        shelves, noise = dbscan(probe.products, 1, eps, dist, sort_key)
+        probe.set_shelves(shelves)
+        # print map(lambda sh: map(lambda pr: pr.id, sh), shelves)
+        # print map(lambda sh: map(lambda pr: pr.patch_url, sh), shelves)
+        probe.build_relations()
+
+        # build matrices, not sure if it is necessary
         curr = probe.products
         n = len(curr)
         rights = np.zeros((n, n))
+        lefts = np.zeros((n, n))
         for i in range(0, n):
-            meee = curr[i]
+            product = curr[i]
             for j in range(0, n):
-                otherrrr = curr[j]
-                rights[i][j] = is_on_right(meee, otherrrr)
-        probe.rights = rights
-        probe.lefts = rights.transpose()
+                neighbour = curr[j].id
+                rights[i][j] = int(neighbour in product.relations[rel_right])
+                lefts[i][j] = int(neighbour in product.relations[rel_left])
+        probe.set_rights(rights)
+        probe.set_lefts(lefts)
 
 
 def show_product_image(window_name, probes, probe_id, product_index):
@@ -60,19 +70,19 @@ def show_product_image(window_name, probes, probe_id, product_index):
     ocv.waitKey(0)  # show plots
 
 
-def is_on_right(me, other):
-    if me == other:
-        return False
-    my_coords = me.mask
-    other_coodrds = other.mask
-    my_width = my_coords["x2"]-my_coords["x1"]
-    delta_x = np.abs(my_coords["x2"] - other_coodrds["x1"])
-    delta_y = np.abs(my_coords["y2"] - other_coodrds["y2"])
-    my_height = my_coords["y2"] - my_coords["y1"]
-    if delta_x <= gap_ratio_x * my_width and delta_y <= gap_ratio_y * my_height:
-        return True
-    else:
-        return False
+# def is_on_right(me, other):
+#     if me == other:
+#         return False
+#     my_coords = me.mask
+#     other_coodrds = other.mask
+#     my_width = my_coords["x2"]-my_coords["x1"]
+#     delta_x = np.abs(my_coords["x2"] - other_coodrds["x1"])
+#     delta_y = np.abs(my_coords["y2"] - other_coodrds["y2"])
+#     my_height = my_coords["y2"] - my_coords["y1"]
+#     if delta_x <= gap_ratio_x * my_width and delta_y <= gap_ratio_y * my_height:
+#         return True
+#     else:
+#         return False
 
 
 def import_data():
@@ -88,10 +98,7 @@ def import_data():
         probes_ids[i] = probes_ids[i].strip(probes_dir)
         probes_ids[i] = probes_ids[i].strip(".jpg")
         probes[probes_ids[i]] = Probe(probes_ids[i])
-        # probes_ids[i] = int(probes_ids[i])
 
-    # probes_ids.sort()
-    # print probes_ids
     with open(csv_path, 'r') as f:
         lines = itertools.islice(f, 1, None)
         reader = csv.reader(lines)
@@ -121,8 +128,8 @@ compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids)
 
 feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")
 
-print "rr"
-print type(rel_list)
-print type(rel_list[0])
-print type(rel_list[0][0])
-print type(rel_list[0][0][0])
+# print "rr"
+# print type(rel_list)
+# print type(rel_list[0])
+# print type(rel_list[0][0])
+# print type(rel_list[0][0][0])

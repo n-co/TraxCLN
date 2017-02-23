@@ -12,7 +12,7 @@ def crop_probes():
             mask = row[5].replace('\'', '\"')  # fix json string
             mask = json.loads(mask)
             cropped = probe_img[mask["y1"]:mask["y2"], mask["x1"]:mask["x2"]]
-            cropped = ocv.resize(cropped, product_hw)  # resize image
+            # cropped = ocv.resize(cropped, product_hw)  # resize image
 
             patch_url = row[8]
 
