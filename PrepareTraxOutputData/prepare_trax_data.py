@@ -22,10 +22,10 @@ def load_data(path):
     return feats, labels, rel_list, train_ids, valid_ids, test_ids
 
 def make_feats_and_labels(probes):
-    ids = np.zeros(csv_length,dtype=int)
-    labels = np.zeros(csv_length,dtype=str)
-    feats = np.zeros(csv_length,dtype=type(np.ndarray))
-    rel_list = np.zeros(csv_length,dtype=type(np.ndarray))
+    ids = np.zeros(csv_length, dtype=int)
+    labels = np.zeros(csv_length, dtype=int)
+    feats = np.zeros((csv_length, product_size),dtype=type(np.ndarray))
+    rel_list = np.zeros(csv_length, dtype=type(np.ndarray))
     for probe_id in probes:
         probe = probes[probe_id]
         for product in probe.products:
@@ -89,9 +89,9 @@ def import_data():
     global csv_length  # declare that the global variable will be changed
     probes = {}
     sample_types = {
-        "train": [],
-        "valid": [],
-        "test": []
+        "train": np.array([], dtype=int),
+        "valid": np.array([], dtype=int),
+        "test": np.array([], dtype=int)
     }
     probes_ids = glob.glob(probes_dir + "*.jpg")
     for i in range(0, len(probes_ids)):
@@ -126,8 +126,11 @@ ids, feats, labels, rel_list = make_feats_and_labels(probes)
 
 compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids)
 
+
 feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")
 
 for id in probes:
     print id + ": " + str(len(probes[id].shelves))
     print map(lambda sh: map(lambda pr: pr.id, sh), probes[id].shelves)
+
+feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")

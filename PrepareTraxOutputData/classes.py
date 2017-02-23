@@ -7,8 +7,8 @@ import numpy as np
 
 class Probe:
     def __init__(self, probe_id):
-        self.id = probe_id
-        self.path = conf.probes_dir + probe_id + ".jpg"
+        self.id = str(probe_id)
+        self.path = str(conf.probes_dir + probe_id + ".jpg")
         self.features = ocv.imread(self.path)
 
         self.rights = None
@@ -41,17 +41,17 @@ class Product:
     def __init__(self, id, brand_code, sample_type, brand_label, form_factor_label, mask, object_label, patch_id, patch_url,
                  probe_id, product_label, voting_confidence, probe_obj ):
         self.id = int(id)
-        self.brand_code = brand_code
-        self.sample_type = sample_type
+        self.brand_code = str(brand_code)
+        self.sample_type = str(sample_type)
         self.brand_label = int(brand_label)
-        self.form_factor_label = form_factor_label
+        self.form_factor_label = int(form_factor_label)
         mask = mask.replace('\'', '\"')  # fix json string
         self.mask = json.loads(mask)
-        self.object_label = object_label
-        self.patch_id = patch_id
-        self.patch_url = patch_url
-        self.probe_id = probe_id
-        self.product_label = product_label
+        self.object_label = int(object_label)
+        self.patch_id = int(patch_id)
+        self.patch_url = str(patch_url)
+        self.probe_id = str(probe_id)
+        self.product_label = str(product_label)
         voting_confidence = voting_confidence.replace('\'', '\"')
         voting_confidence = voting_confidence.replace('u', '')
         self.voting_confidence = json.loads(voting_confidence)  # TODO: convert to json
@@ -87,12 +87,11 @@ class Product:
         x2 = self.mask["x2"]
         y1 = self.mask["y1"]
         y2 = self.mask["y2"]
-        # img = ocv.imread(probe_path)
         img = self.probe_obj.features
         cropped = img[y1:y2, x1:x2]
         cropped = ocv.resize(cropped, conf.product_hw)  # resize image
-
-        return cropped
+        cropped_flattened = cropped.flatten()
+        return cropped_flattened
 
 
 
