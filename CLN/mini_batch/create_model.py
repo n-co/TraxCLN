@@ -11,6 +11,7 @@ from sklearn import metrics
 from keras.constraints import *
 from keras.layers.advanced_activations import *
 from graph_layers import *
+from graph_layers_cnn import *
 
 
 class SaveResult(Callback):
@@ -154,6 +155,7 @@ def multi_sparse_graph_loss(y_true, y_pred):
     return tensor.mean(objectives.sparse_categorical_crossentropy(y_true, y_pred))
 
 def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
+    # Creates a keras model that can be used, compiled and fitted.
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -161,6 +163,7 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
 
     trans_bias = - n_layers * bias_factor
 
+    # Creates a Keras Layer. GraphHighway inherits from the Layer Class and overrides it.
     shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                                   init=init, activation=act, transform_bias=trans_bias)
 
@@ -170,22 +173,37 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
                             init=init, activation=act, transform_bias=trans_bias)
 
     #x, rel, rel_mask
+    # Input is a method of Keras that creates a tensor. it seems to be a placeholder for now.
     inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
+    # a list of tensors, the size of the number of layers. this is probably because each layer will need to know its context.
+    # the shape of each context is the number of relations over the number of hidden dimenstions.
+    #seems to be a place holder for now.
     contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
                 for i in range(n_layers)]
 
+    # Dence is a a core function of Keras. it inherits from Layer.
     hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
+    #wraps hidden nodes with a dropout Keras Class incase of need.
     if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
+    #this is how we create muliple layers. we iterate and override the hidd_nodes obj and always wrap it.s
+    # occasionaly we add dropout.
     for i in range(n_layers):
         hidd_nodes = highway(shared)([hidd_nodes, contexts[i]])
         if shared == 0 and i % 5 == 2:
             hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
-    top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
-    top_nodes = Activation(activation=top_act)(top_nodes)
+    # wraps hidden nodes with a dropout Keras Class incase of need.
 
+    # make the last lauer a dense layer,by wrapping previous hidden layers.
+    top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
+
+    # add the top activation that make all probabilities work.
+    top_nodes = Activation(activation=top_act)(top_nodes)
+    #convert input nodes int a list array, and append contexnt array to this array. creates a model
+    # in which input is both input nodes (a tensor of the correct form) and the context array, and output is
+    # is top nodes - the hidden layers wrapped with a dense + activation layer.
     model = Model(input=[inp_nodes] + contexts, output=[top_nodes])
 
     return model
@@ -253,18 +271,34 @@ def create_hcnn(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shar
 
     trans_bias = - n_layers * bias_factor
 
-    shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
-                                  init=init, activation=act, transform_bias=trans_bias)
 
-    def highway(shared):
-        if shared == 1: return shared_highway
-        return GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
-                            init=init, activation=act, transform_bias=trans_bias)
 
-    #x, rel, rel_mask
     inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
     contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
                 for i in range(n_layers)]
+
+    inp_nodes2 = tensor.reshape(inp_nodes,[-1,28,28,3])
+    net = Convolution2D(32, 3, 3, activation='relu', input_shape=(1, 28, 28))(inp_nodes2)
+    net = Convolution2D(32, 3, 3, activation='relu')(net)
+    net = MaxPooling2D(pool_size=(2, 2))(net)
+    net = Dropout(0.25)(net)
+    net = Flatten()(net)
+    net = Dense(128, activation='relu')(net)
+    # net = Dropout(0.5)(net)
+    # net = Dense(10, activation='softmax')(net)
+
+    shared_highway = GraphHighwayCNN(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                                  init=init, activation=act, transform_bias=trans_bias)
+
+
+
+    def highway(shared):
+        if shared == 1: return shared_highway
+        return GraphHighwayCNN(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                            init=init, activation=act, transform_bias=trans_bias)
+
+    #x, rel, rel_mask
+
 
     hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
     if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)

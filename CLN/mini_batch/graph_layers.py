@@ -1,6 +1,6 @@
 from keras.layers import Layer, InputSpec, merge
 from keras import regularizers, initializations, activations, constraints
-from keras import backend as K
+from keras import backend as KerasBackend
 import numpy as np
 
 class GraphHighway(Layer):
@@ -26,7 +26,6 @@ class GraphHighway(Layer):
         self.bias = bias
         self.initial_weights = weights
         self.input_spec = [InputSpec(ndim=2)]
-
         self.input_dim = input_dim
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
@@ -35,7 +34,7 @@ class GraphHighway(Layer):
 
     def build(self, input_shape):
         input_dim = self.input_dim
-        self.input_spec = [InputSpec(dtype=K.floatx(),
+        self.input_spec = [InputSpec(dtype=KerasBackend.floatx(),
                                      shape=(None, input_dim))]
 
         self.W = self.init((input_dim, input_dim),
@@ -46,10 +45,10 @@ class GraphHighway(Layer):
                            name='{}_V'.format(self.name))
 
         if self.bias:
-            self.b = K.zeros((input_dim,), name='{}_b'.format(self.name))
+            self.b = KerasBackend.zeros((input_dim,), name='{}_b'.format(self.name))
             # initialize with a vector of values `transform_bias`
-            self.b_carry = K.variable(np.ones((input_dim,)) * self.transform_bias,
-                                      name='{}_b_carry'.format(self.name))
+            self.b_carry = KerasBackend.variable(np.ones((input_dim,)) * self.transform_bias,
+                                                 name='{}_b_carry'.format(self.name))
 
             self.V_carry = self.init((self.n_rel, input_dim, input_dim),
                              name='{}_V_carry'.format(self.name))
@@ -90,14 +89,13 @@ class GraphHighway(Layer):
     def call(self, inputs, mask=None):
         x = inputs[0] #feature matrix
         context = inputs[1] # n_nodes, n_rel, dim
-
         # dot(V_carry, context)
-        carry_gate = K.dot(x, self.W_carry)
+        carry_gate = KerasBackend.dot(x, self.W_carry)
         carry_context = context[:, :, :, None] * self.V_carry[None, :, :, :]
         if self.mean == 0:
-            carry_context = K.max(carry_context, axis=(1, 2))
+            carry_context = KerasBackend.max(carry_context, axis=(1, 2))
         else:
-            carry_context = K.sum(carry_context, axis=(1, 2)) / self.mean
+            carry_context = KerasBackend.sum(carry_context, axis=(1, 2)) / self.mean
 
         carry_gate += carry_context
 
@@ -108,11 +106,11 @@ class GraphHighway(Layer):
         # dot(V, context)
         context = context[:, :, :, None] * self.V[None, :, :, :]
         if self.mean == 0:
-            context = K.max(context, axis=(1, 2))
+            context = KerasBackend.max(context, axis=(1, 2))
         else:
-            context = K.sum(context, axis=(1, 2)) / self.mean
+            context = KerasBackend.sum(context, axis=(1, 2)) / self.mean
 
-        h = K.dot(x, self.W) + context
+        h = KerasBackend.dot(x, self.W) + context
         if self.bias:
             h += self.b
 
@@ -169,7 +167,7 @@ class GraphDense(Layer):
     def build(self, input_shape):
         input_dim = self.input_dim
         output_dim = self.output_dim
-        self.input_spec = [InputSpec(dtype=K.floatx(),
+        self.input_spec = [InputSpec(dtype=KerasBackend.floatx(),
                                      shape=(None, input_dim))]
 
         self.W = self.init((input_dim, output_dim),
@@ -178,7 +176,7 @@ class GraphDense(Layer):
                            name='{}_V'.format(self.name))
 
         if self.bias:
-            self.b = K.zeros((output_dim,), name='{}_b'.format(self.name))
+            self.b = KerasBackend.zeros((output_dim,), name='{}_b'.format(self.name))
             # initialize with a vector of values `transform_bias`
             self.trainable_weights = [self.W, self.V, self.b]
         else:
@@ -216,9 +214,9 @@ class GraphDense(Layer):
 
         # dot(V, context)
         context = context[:, :, :, None] * self.V[None, :, :, :]
-        context = K.sum(context, axis=(1, 2)) / self.mean
+        context = KerasBackend.sum(context, axis=(1, 2)) / self.mean
 
-        h = K.dot(x, self.W) + context
+        h = KerasBackend.dot(x, self.W) + context
         if self.bias:
             h += self.b
         h = self.activation(h)

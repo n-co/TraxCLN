@@ -18,7 +18,7 @@ framed_probes_dir = "../TraxInputData/FramedProbes/"
 products_dir = "../TraxInputData/Products/"
 pickle_path = "../TraxOutputData/data/trax.pkl"
 
-product_hw = (15, 15)
+product_hw = (28, 28)
 number_of_channels = 3
 product_size = product_hw[0]*product_hw[1]*number_of_channels
 

@@ -59,7 +59,9 @@ elif modelType == 'Dense':
                            n_rel=rel_list.shape[-2], n_neigh=rel_list.shape[-1],
                            n_classes=n_classes, shared=shared, nmean=nmean, dropout=dropout)
 elif modelType == 'HCNN':
-    model = create_hcnn()
+    model = create_hcnn(n_layers=n_layers, hidden_dim=dim, input_dim=feats.shape[-1],
+                           n_rel=rel_list.shape[-2], n_neigh=rel_list.shape[-1],
+                           n_classes=n_classes, shared=shared, nmean=nmean, dropout=dropout)
 
 model.summary()
 
