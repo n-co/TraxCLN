@@ -90,8 +90,7 @@ class Product:
         img = self.probe_obj.features
         cropped = img[y1:y2, x1:x2]
         cropped = ocv.resize(cropped, conf.product_hw)  # resize image
-        cropped_flattened = cropped.flatten()
-        return cropped_flattened
+        return cropped
 
 
 

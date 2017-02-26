@@ -18,9 +18,13 @@ framed_probes_dir = "../TraxInputData/FramedProbes/"
 products_dir = "../TraxInputData/Products/"
 pickle_path = "../TraxOutputData/data/trax.pkl"
 
-product_hw = (28, 28)
-number_of_channels = 3
-product_size = product_hw[0]*product_hw[1]*number_of_channels
+product_height =32
+product_width = 32
+product_channels = 3
+product_shape = (product_height, product_width, product_channels)
+product_hw = (product_height, product_width)
+
+product_size = product_hw[0]*product_hw[1] * product_channels
 
 csv_length = -1
 

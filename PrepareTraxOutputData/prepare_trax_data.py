@@ -24,7 +24,7 @@ def load_data(path):
 def make_feats_and_labels(probes):
     ids = np.zeros(csv_length, dtype=int)
     labels = np.zeros(csv_length, dtype=int)
-    feats = np.zeros((csv_length, product_size),dtype=type(np.ndarray))
+    feats = np.zeros((csv_length, product_height, product_width, product_channels), dtype=type(np.ndarray))
     rel_list = np.zeros(csv_length, dtype=type(np.ndarray))
     for probe_id in probes:
         probe = probes[probe_id]

@@ -11,7 +11,6 @@ from sklearn import metrics
 from keras.constraints import *
 from keras.layers.advanced_activations import *
 from graph_layers import *
-from graph_layers_cnn import *
 
 
 class SaveResult(Callback):
@@ -263,7 +262,7 @@ def create_highway_noRel(n_layers, hidden_dim, input_dim, n_classes, shared=1, d
     return model
 
 
-def create_hcnn(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
+def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -271,36 +270,59 @@ def create_hcnn(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shar
 
     trans_bias = - n_layers * bias_factor
 
-
-
-    inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
+    image_input_nodes = Input(shape=input_shape, dtype='float32', name='inp_nodes')
     contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
                 for i in range(n_layers)]
 
-    inp_nodes2 = tensor.reshape(inp_nodes,[-1,28,28,3])
-    net = Convolution2D(32, 3, 3, activation='relu', input_shape=(1, 28, 28))(inp_nodes2)
-    net = Convolution2D(32, 3, 3, activation='relu')(net)
-    net = MaxPooling2D(pool_size=(2, 2))(net)
-    net = Dropout(0.25)(net)
-    net = Flatten()(net)
-    net = Dense(128, activation='relu')(net)
+
+    # net = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), border_mode='same', activation='relu',
+    #                         W_constraint=maxnorm(3))(image_input_nodes)
+    # net = Dropout(0.2)(net)
+    # net = Convolution2D(32, 3, 3, activation='relu', border_mode='same', W_constraint=maxnorm(3))(net)
+    # net = MaxPooling2D(pool_size=(2, 2))(net)
+    # net = Flatten()(net)
+    # net = Dense(512, activation='relu', W_constraint=maxnorm(3),name='somekindofden')(net)
     # net = Dropout(0.5)(net)
-    # net = Dense(10, activation='softmax')(net)
+    # net = Dense(hidden_dim, activation='softmax',name='somekindofden2')(net)
 
-    shared_highway = GraphHighwayCNN(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+    net = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), activation='relu', border_mode='same')(image_input_nodes)
+    net = Dropout(0.2)(net)
+    net = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(net)
+    net = MaxPooling2D(pool_size=(2, 2))(net)
+
+    net = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(net)
+    net = Dropout(0.2)(net)
+    net = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(net)
+    net = MaxPooling2D(pool_size=(2, 2))(net)
+
+    net = Convolution2D(128, 3, 3, activation='relu', border_mode='same')(net)
+    net = Dropout(0.2)(net)
+    net = Convolution2D(128, 3, 3, activation='relu', border_mode='same')(net)
+    net = MaxPooling2D(pool_size=(2, 2))(net)
+
+    net = Convolution2D(256, 3, 3, activation='relu', border_mode='same')(net)
+    net = Dropout(0.2)(net)
+    net = Convolution2D(256, 3, 3, activation='relu', border_mode='same')(net)
+    net = MaxPooling2D(pool_size=(2, 2))(net)
+
+    net = Flatten()(net)
+    net = Dropout(0.2)(net)
+    # net = Dense(1024, activation='relu', W_constraint=maxnorm(3),name="dnscnn1")(net)
+    # net = Dropout(0.2)(net)
+    # net = Dense(512, activation='relu', W_constraint=maxnorm(3),name="dnscnn2")(net)
+    # net = Dropout(0.2)(net)
+    net = Dense(hidden_dim, activation='relu',name="dnscnn3")(net)
+
+    shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                                   init=init, activation=act, transform_bias=trans_bias)
-
-
 
     def highway(shared):
         if shared == 1: return shared_highway
-        return GraphHighwayCNN(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+        return GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                             init=init, activation=act, transform_bias=trans_bias)
 
     #x, rel, rel_mask
-
-
-    hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
+    hidd_nodes = Dense(output_dim=hidden_dim, activation=act)(net)
     if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     for i in range(n_layers):
@@ -309,9 +331,9 @@ def create_hcnn(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shar
             hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
-    top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
+    top_nodes = Dense(output_dim=n_classes )(hidd_nodes)
     top_nodes = Activation(activation=top_act)(top_nodes)
 
-    model = Model(input=[inp_nodes] + contexts, output=[top_nodes])
+    model = Model(input=[image_input_nodes] + contexts, output=[top_nodes])
 
     return model
