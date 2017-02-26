@@ -1,14 +1,15 @@
+from config import *
 import numpy
 import sys
 import time
 import prepare_data
-from config import *
 from keras.optimizers import *
 from keras.objectives import *
 from create_model import *
 from app_hidden import *
 
 ################################## LOAD DATA ##################################################
+logging.info("Process args and Load data - Started.")
 args = prepare_data.arg_passing(sys.argv)
 seed = args['-seed']
 numpy.random.seed(seed)
@@ -30,7 +31,6 @@ saving = args['-saving']
 nmean = args['-nmean']
 yidx = args['-y']
 batch_size = int(args['-batch'])
-
 if 'dr' in args['-reg']: dropout = True
 else: dropout = False
 feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = prepare_data.load_data(dataset)
@@ -39,16 +39,27 @@ if task == 'movie':
     labels = labels[:, yidx]
 
 n_classes = numpy.max(labels)
+
 if n_classes > 1:
     n_classes += 1
     loss = sparse_categorical_crossentropy
 else:
     loss = binary_crossentropy
 
-########################## BUILD MODEL ###############################################
-print 'Building model ...'
+#define the optimizer for weights finding.
+all_optimizers = {'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
+       'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)}
+# opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+# opt = Adagrad(learning_rate=0.01, epsilon=1e-8)
+# opt = Adadelta(learning_rate=1.0, rho=0.95, epsilon=1e-8)
+# opt = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+# opt = Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-8
+selected_optimizer = all_optimizers[args['-opt']]
 
-# create model: n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared
+logging.info("Process args and Load data - Ended.")
+
+########################## BUILD MODEL ###############################################
+logging.info("Build Model - Started")
 
 if modelType == 'Highway':
     model = create_highway(n_layers=n_layers, hidden_dim=dim, input_dim=feats.shape[-1],
@@ -64,28 +75,21 @@ elif modelType == 'HCNN':
                            n_classes=n_classes, shared=shared, nmean=nmean, dropout=dropout)
 
 model.summary()
-
-
-#define the optimizer for weights finding.
-all_optimizers = {'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
-       'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)}
-# opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
-# opt = Adagrad(learning_rate=0.01, epsilon=1e-8)
-# opt = Adadelta(learning_rate=1.0, rho=0.95, epsilon=1e-8)
-# opt = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
-# opt = Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-8
-selected_optimizer = all_optimizers[args['-opt']]
-
 #compile the model, no that it has been assigned with all of the information it needs.
 model.compile(optimizer=selected_optimizer, loss=loss)
 
+logging.info("Build Model - Ended.")
+
+
+logging.info("Last Configurations before launching network - Started.")
 #log information so far.
 
 #prints the model, in a json format, to the desired path.
 json_string = model.to_json()
-fModel = open(models_path + saving + '.json', 'w')
-fModel.write(json_string)
-fModel.close()
+fModel = models_path + saving + '.json'
+f = open(fModel,'w')
+f.write(json_string)
+f.close()
 
 # Define path for saving results.
 fParams = best_models_path + saving + '.hdf5'
@@ -96,10 +100,9 @@ f = open(fResult, 'w')
 f.write('Training log:\n')
 f.close()
 
-# contains a class!!
+
 past_hiddens = HiddenSaving(n_samples=feats.shape[0], n_layers=n_layers,
                             h_dim=dim, rel=rel_list, rel_mask=rel_mask)
-
 
 # created a variable containing a generator, that upon request generates a list of, possible random, ids
 # to select from TRAIN SET.
@@ -116,7 +119,8 @@ test_x, test_y = feats[test_ids], labels[test_ids]
 saveResult = SaveResult(task=task, fileResult=fResult, fileParams=fParams)
 callbacks = [saveResult, NanStopping()]
 hidd_funcs = get_hidden_funcs(model, n_layers)
-
+logging.info("Last Configurations before launching network - Ended.")
+logging.info("CLN - Started.")
 for epoch in xrange(number_of_epochs): # train the network a few times to get more accurate results.
     start = time.time()
     for i in xrange(n_batchs): # go over all batches. all of training data will be used.
@@ -135,7 +139,6 @@ for epoch in xrange(number_of_epochs): # train the network a few times to get mo
             test_context = past_hiddens.get_context(test_ids)
             valid_data = [[valid_x] + valid_context, valid_y]
             saveResult.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
-
             for x, ct, ids in zip([valid_x, test_x], [valid_context, test_context], [valid_ids, test_ids]):
                 new_hiddens = get_hiddens(model, x, ct, hidd_funcs)
                 past_hiddens.update_hidden(ids, new_hiddens)
@@ -150,8 +153,8 @@ for epoch in xrange(number_of_epochs): # train the network a few times to get mo
         # update hidden states of train in a mini-batch after gradient updating
         new_train_hiddens = get_hiddens(model, train_x, context, hidd_funcs)
         past_hiddens.update_hidden(mini_batch_ids, new_train_hiddens)
-
     end = time.time()
-    print 'epoch %d, runtime: %.1f' % (epoch, end - start)
+    logging.info('epoch %d, runtime: %.1f' % (epoch, end - start))
     if model.stop_training:
         break
+logging.info("CLN - Ended.")

@@ -2,7 +2,8 @@ from config import *
 from dbscan import dbscan
 
 
-def compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids):
+def compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_ids):
+    logging.info('compress_to_gzip_file - Started.')
     f = open(pickle_path, 'wb')
     cPickle.dump((feats, labels, rel_list, train_ids, valid_ids, test_ids), f)
     f.close()
@@ -14,14 +15,17 @@ def compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids):
     out_file = gzip.GzipFile(pickle_path+".gz", 'wb')
     out_file.write(s)
     out_file.close()
+    logging.info('compress_to_gzip_file - Ended.')
 
-def load_data(path):
+def load_gzip_file(path):
+    logging.info('load_gzip_file - Started')
     f = gzip.open(path, 'rb')
     feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
-
+    logging.info('load_gzip_file - Ended.')
     return feats, labels, rel_list, train_ids, valid_ids, test_ids
 
-def make_feats_and_labels(probes):
+def format_ids_feats_labels_rel_list(probes):
+    logging.info('format_ids_feats_labels_rel_list - Started.')
     ids = np.zeros(csv_length, dtype=int)
     labels = np.zeros(csv_length, dtype=int)
     feats = np.zeros((csv_length, product_height, product_width, product_channels), dtype=type(np.ndarray))
@@ -29,24 +33,23 @@ def make_feats_and_labels(probes):
     for probe_id in probes:
         probe = probes[probe_id]
         for product in probe.products:
-            # product.build_relations()
             product.relations = np.array(product.relations)
-            # print "product #" + str(product.id) + ": " + str(product.relations[rel_left]) + str(product.relations[rel_right])
-            labels[product.id] = product.brand_label  # product.product_label  # TODO: for now we took the brand_label which is an integer
+            labels[product.id] = product.product_label  # product.product_label  # TODO: for now we took the brand_label which is an integer
             feats[product.id] = product.features
             rel_list[product.id] = product.relations
             ids[product.id] = product.id
+    logging.info('format_ids_feats_labels_rel_list - Ended.')
     return ids, feats, labels, rel_list
 
 
 def populate_probes(probes):
+    logging.info('Populate Probes - Started.')
     for probe_id in probes:
-        # print probe_id
         probe = probes[probe_id]
         shelves, noise = dbscan(probe.products, 1, eps, dist, sort_key)
         probe.set_shelves(shelves)
-        # print map(lambda sh: map(lambda pr: pr.id, sh), shelves)
-        # print map(lambda sh: map(lambda pr: pr.patch_url, sh), shelves)
+        # logging.debug(str(map(lambda sh: map(lambda pr: pr.id, sh), shelves)))
+        # logging.debug(str(map(lambda sh: map(lambda pr: pr.patch_url, sh), shelves)))
         probe.build_relations()
 
         # build matrices, not sure if it is necessary
@@ -62,6 +65,7 @@ def populate_probes(probes):
                 lefts[i][j] = int(neighbour in product.relations[rel_left])
         probe.set_rights(rights)
         probe.set_lefts(lefts)
+    logging.info('Populate Probes - Ended.')
 
 
 def show_product_image(window_name, probes, probe_id, product_index):
@@ -86,7 +90,8 @@ def show_product_image(window_name, probes, probe_id, product_index):
 
 
 def import_data():
-    global csv_length  # declare that the global variable will be changed
+    logging.info("Import data - Started.")
+    global csv_length  # declare that the variable is global so it can be modified.
     probes = {}
     sample_types = {
         "train": np.array([], dtype=int),
@@ -109,28 +114,21 @@ def import_data():
             product.index_in_probe = len(probes[product.probe_id].products)
             probes[product.probe_id].products = np.append(probes[product.probe_id].products, product)
             sample_types[product.sample_type] = np.append(sample_types[product.sample_type], product.id)
-    return {
-        "probes": probes,
-        "train": sample_types["train"],
-        "valid": sample_types["valid"],
-        "test": sample_types["test"]
-    }
+    logging.info("Import Data - Ended.")
+    return probes,sample_types["train"],sample_types["valid"],sample_types['test']
 
-raw_data = import_data()
-train_ids = raw_data["train"]
-valid_ids = raw_data["valid"]
-test_ids = raw_data["test"]
-probes = raw_data["probes"]
-populate_probes(probes)
-ids, feats, labels, rel_list = make_feats_and_labels(probes)
+def main():
+    logging.info("Prepare Trax Data - Started.")
 
-compress_data(feats, labels, rel_list, train_ids, valid_ids, test_ids)
+    probes, train_ids,valid_ids,test_ids = import_data()
+    populate_probes(probes)
+    ids, feats, labels, rel_list = format_ids_feats_labels_rel_list(probes)
+    compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_ids)
 
+    for id in probes:
+        logging.debug("%s: %d",id,len(probes[id].shelves))
+        logging.debug(str(map(lambda sh: map(lambda pr: pr.id, sh), probes[id].shelves)))
+    logging.debug(str(labels))
+    logging.info("Prepare Trax Data - Ended.")
 
-feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")
-
-for id in probes:
-    print id + ": " + str(len(probes[id].shelves))
-    print map(lambda sh: map(lambda pr: pr.id, sh), probes[id].shelves)
-
-feats, labels, rel_list, train_ids, valid_ids, test_ids = load_data(pickle_path + ".gz")
+main()

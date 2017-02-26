@@ -1,2 +1,2 @@
 Training log:
-0	10.7454	14.4133	|	0.0347	0.1058	0.1058	0.1058	|	0.0678	0.1786	0.1786	0.1786	|  Best result at epoch 0
+e#: 0|	valiation-->16.1181	16.1181	|	0.0000	0.0000	0.0000	0.0000	|	test-->0.0364	0.1429	0.1429	0.1429	|  The epoch with the best result was epoch number 0

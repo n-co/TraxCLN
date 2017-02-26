@@ -1,3 +1,4 @@
+from config import *
 import gzip
 import cPickle
 import numpy
@@ -53,11 +54,13 @@ def create_mask(rel_list):
     return rel, mask
 
 def load_data(path):
+    logging.info("load_data - Started.")
     #input: full path to a gzip file, containing cPickle data.
     #output: content of cPickle data.
     f = gzip.open(path, 'rb')
     feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
     rel_list, rel_mask = create_mask(rel_list)
+    logging.info("load_data - Ended.")
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
 
 class MiniBatchIds():

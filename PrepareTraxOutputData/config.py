@@ -11,12 +11,19 @@ import cPickle
 import gzip
 import pickle
 import math
+import sys
+sys.path.insert(0, '../')
+import logger
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
+logging.info("Logger is up and running.")
 
 csv_path = "../TraxInputData/data.csv"
 probes_dir = "../TraxInputData/Probes/"
 framed_probes_dir = "../TraxInputData/FramedProbes/"
 products_dir = "../TraxInputData/Products/"
 pickle_path = "../TraxOutputData/data/trax.pkl"
+
 
 product_height =32
 product_width = 32
@@ -52,11 +59,10 @@ def dist(pr1, pr2):
 rel_left = 0
 rel_right = 1
 
-
-
-
+logging.info("Loaded configuration file.")
 
 # commands
 # f.seek(0)
 # show_product_image("noam", probes, '10521992', 2)
 # img = ocv.imread(probe_path)
+# feats, labels, rel_list, train_ids, valid_ids, test_ids = load_gzip_file(pickle_path + ".gz")

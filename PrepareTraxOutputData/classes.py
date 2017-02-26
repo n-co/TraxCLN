@@ -4,6 +4,23 @@ import json
 import cv2 as ocv
 import numpy as np
 
+class StringToIntConvertor:
+
+    def __init__(self):
+
+        self.mapping = {}
+        self.counter = 0
+
+    def toInt(self,s):
+        ans = -1
+        if s in self.mapping:
+            ans = self.mapping[s]
+        else:
+            self.mapping[s] = self.counter
+            ans = self.counter
+            self.counter+=1
+        return ans
+sti_convertor = StringToIntConvertor()
 
 class Probe:
     def __init__(self, probe_id):
@@ -51,7 +68,7 @@ class Product:
         self.patch_id = int(patch_id)
         self.patch_url = str(patch_url)
         self.probe_id = str(probe_id)
-        self.product_label = str(product_label)
+        self.product_label = sti_convertor.toInt(product_label)
         voting_confidence = voting_confidence.replace('\'', '\"')
         voting_confidence = voting_confidence.replace('u', '')
         self.voting_confidence = json.loads(voting_confidence)  # TODO: convert to json
@@ -59,9 +76,7 @@ class Product:
 
         self.path = conf.products_dir + patch_url + ".jpg"
         self.features = self.populate_features()
-        # self.relations = np.empty([2, 0], dtype=type(np.ndarray))
         self.relations = [[], []]
-        # print self.relations
         self.index_in_probe = -1
 
     # def build_relations(self):

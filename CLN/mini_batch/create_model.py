@@ -88,17 +88,19 @@ class SaveResult(Callback):
         v_auc, v_f1, v_pre, v_rec = self._compute_result(self.valid_x, self.valid_y)
 
         f = open(self.fileResult, 'a')
-        f.write('%d\t%.4f\t%.4f\t|\t%.4f\t%.4f\t%.4f\t%.4f\t|' % (self.n_epoch, logs['loss'], logs['val_loss'], v_auc, v_f1, v_pre, v_rec))
+        f.write('e#: %d|'%(self.n_epoch))
+        f.write('\tvaliation-->%.4f\t%.4f\t|\t%.4f\t%.4f\t%.4f\t%.4f\t|' % ( logs['loss'], logs['val_loss'], v_auc, v_f1, v_pre, v_rec))
         if self.do_test:
             t_auc, t_f1, t_pre, t_rec = self._compute_result(self.test_x, self.test_y)
-            f.write('\t%.4f\t%.4f\t%.4f\t%.4f\t|' % (t_auc, t_f1, t_pre, t_rec))
+            f.write('\ttest-->%.4f\t%.4f\t%.4f\t%.4f\t|' % (t_auc, t_f1, t_pre, t_rec))
 
         if v_f1 > self.bestResult:
             self.bestResult = v_f1
             self.bestEpoch = self.n_epoch
+            #this actually save weight of net to file.
             self.model.save_weights(self.fileParams, overwrite=True)
             self.wait = 0
-        f.write('  Best result at epoch %d\n' % self.bestEpoch)
+        f.write('  The epoch with the best result was epoch number %d\n' % self.bestEpoch)
         f.close()
 
         if v_f1 < self.bestResult:
@@ -140,18 +142,18 @@ class NanStopping(Callback):
             if numpy.isnan(k):
                 self.model.stop_training = True
 
-def graph_loss(y_true, y_pred):
-    ids = tensor.nonzero(y_true + 1)[0]
-    y_true = y_true[ids]
-    y_pred = y_pred[ids]
-    return tensor.mean(tensor.nnet.binary_crossentropy(y_pred, y_true))
-
-def multi_sparse_graph_loss(y_true, y_pred):
-    ids = tensor.nonzero(y_true[:,0] + 1)[0]
-    y_true = y_true[ids]
-    y_pred = y_pred[ids]
-
-    return tensor.mean(objectives.sparse_categorical_crossentropy(y_true, y_pred))
+# def graph_loss(y_true, y_pred):
+#     ids = tensor.nonzero(y_true + 1)[0]
+#     y_true = y_true[ids]
+#     y_pred = y_pred[ids]
+#     return tensor.mean(tensor.nnet.binary_crossentropy(y_pred, y_true))
+#
+# def multi_sparse_graph_loss(y_true, y_pred):
+#     ids = tensor.nonzero(y_true[:,0] + 1)[0]
+#     y_true = y_true[ids]
+#     y_pred = y_pred[ids]
+#
+#     return tensor.mean(objectives.sparse_categorical_crossentropy(y_true, y_pred))
 
 def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
     # Creates a keras model that can be used, compiled and fitted.
@@ -263,7 +265,11 @@ def create_highway_noRel(n_layers, hidden_dim, input_dim, n_classes, shared=1, d
 
 
 def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
+    logging.info("create_hcnn - Started.")
+    logging.debug("create_hcnn parameters: n_layers: %d, hidden_dim: %d, input_shape: %s, n_rel: %d, n_neigh: %d, n_classes = %d",
+                  n_layers,hidden_dim,str(input_shape),n_rel,n_neigh,n_classes)
     act = 'relu'
+    cnn_act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
     init = 'glorot_normal'
@@ -274,66 +280,58 @@ def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, sh
     contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
                 for i in range(n_layers)]
 
+    cnn_nodes = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), activation=cnn_act, border_mode='same')(image_input_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(32, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
-    # net = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), border_mode='same', activation='relu',
-    #                         W_constraint=maxnorm(3))(image_input_nodes)
-    # net = Dropout(0.2)(net)
-    # net = Convolution2D(32, 3, 3, activation='relu', border_mode='same', W_constraint=maxnorm(3))(net)
-    # net = MaxPooling2D(pool_size=(2, 2))(net)
-    # net = Flatten()(net)
-    # net = Dense(512, activation='relu', W_constraint=maxnorm(3),name='somekindofden')(net)
-    # net = Dropout(0.5)(net)
-    # net = Dense(hidden_dim, activation='softmax',name='somekindofden2')(net)
+    cnn_nodes = Convolution2D(64, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(64, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
-    net = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), activation='relu', border_mode='same')(image_input_nodes)
-    net = Dropout(0.2)(net)
-    net = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(net)
-    net = MaxPooling2D(pool_size=(2, 2))(net)
+    cnn_nodes = Convolution2D(128, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(128, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
-    net = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(net)
-    net = Dropout(0.2)(net)
-    net = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(net)
-    net = MaxPooling2D(pool_size=(2, 2))(net)
+    cnn_nodes = Convolution2D(256, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(256, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
-    net = Convolution2D(128, 3, 3, activation='relu', border_mode='same')(net)
-    net = Dropout(0.2)(net)
-    net = Convolution2D(128, 3, 3, activation='relu', border_mode='same')(net)
-    net = MaxPooling2D(pool_size=(2, 2))(net)
-
-    net = Convolution2D(256, 3, 3, activation='relu', border_mode='same')(net)
-    net = Dropout(0.2)(net)
-    net = Convolution2D(256, 3, 3, activation='relu', border_mode='same')(net)
-    net = MaxPooling2D(pool_size=(2, 2))(net)
-
-    net = Flatten()(net)
-    net = Dropout(0.2)(net)
+    cnn_nodes = Flatten()(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
     # net = Dense(1024, activation='relu', W_constraint=maxnorm(3),name="dnscnn1")(net)
-    # net = Dropout(0.2)(net)
+    # net = Dropout(dropout_ration_cnn)(net)
     # net = Dense(512, activation='relu', W_constraint=maxnorm(3),name="dnscnn2")(net)
-    # net = Dropout(0.2)(net)
-    net = Dense(hidden_dim, activation='relu',name="dnscnn3")(net)
+    # net = Dropout(dropout_ration_cnn)(net)
+    cnn_nodes = Dense(hidden_dim, activation=cnn_act,name="dnscnn3")(cnn_nodes)
 
     shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                                   init=init, activation=act, transform_bias=trans_bias)
 
     def highway(shared):
-        if shared == 1: return shared_highway
+        if shared == 1:
+            return shared_highway
         return GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                             init=init, activation=act, transform_bias=trans_bias)
 
     #x, rel, rel_mask
-    hidd_nodes = Dense(output_dim=hidden_dim, activation=act)(net)
-    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+    hidd_nodes = Dense(output_dim=hidden_dim, activation=act)(cnn_nodes)
+    if dropout:
+        hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
     for i in range(n_layers):
         hidd_nodes = highway(shared)([hidd_nodes, contexts[i]])
         if shared == 0 and i % 5 == 2:
             hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
 
-    if dropout: hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+    if dropout:
+        hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
     top_nodes = Dense(output_dim=n_classes )(hidd_nodes)
     top_nodes = Activation(activation=top_act)(top_nodes)
 
     model = Model(input=[image_input_nodes] + contexts, output=[top_nodes])
-
+    logging.info("create_hcnn - Ended. returned a model.")
     return model
