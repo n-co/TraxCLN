@@ -16,7 +16,7 @@ sys.path.insert(0, '../')
 import logger
 import logging
 logging.getLogger().setLevel(logging.DEBUG)
-logging.info("Logger is up and running.")
+logging.info("Logger is up and running!")
 
 csv_path = "../TraxInputData/data.csv"
 probes_dir = "../TraxInputData/Probes/"

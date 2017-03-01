@@ -50,6 +50,7 @@ class _AnsiColorizer(object):
         """
         color = self._colors[color]
         self.stream.write('\x1b[%s;1m%s\x1b[0m' % (color, text))
+        self.stream.write('\x1b[%s%s\x1b[0m' % ('w', "\n"))
 
 
 class ColorHandler(logging.StreamHandler):
@@ -64,8 +65,8 @@ class ColorHandler(logging.StreamHandler):
             logging.ERROR: "red"
         }
         fm = self.format(record)
-        color = msg_colors.get(record.levelno, "blue")
-        self.stream.write(fm + "\n", color)
+        color = msg_colors.get(record.levelno, "white")
+        self.stream.write(fm, color)
 
 
 c = ColorHandler()

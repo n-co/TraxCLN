@@ -97,7 +97,7 @@ f.write('Training log:\n')
 f.close()
 
 saveResult = SaveResult([[feats, rel_list, rel_mask], labels, train_ids, valid_ids, test_ids],
-                        task=task, fileResult=fResult, fileParams=fParams)
+                        task=task, file_result=fResult, file_params=fParams)
 
 callbacks=[saveResult, NanStopping()]
 

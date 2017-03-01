@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="e884dacf-1f8f-43a1-bf19-1f70e2573008" name="TraxCLNPersonalNir" url="http://localhost">
+        <fileTransfer host="localhost" port="2224" rootFolder="/users/studs/bsc/2015/nirse" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="2224" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

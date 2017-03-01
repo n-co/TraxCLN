@@ -3,22 +3,29 @@ import gzip
 import cPickle
 import numpy
 
+
 def arg_passing(argv):
+    """
+    input:
+        argv: the command line args that were passed.
+    output:
+        arg_dict: a json dictionary containing args in the desir
+    """
     i = 1
-    #set default args.
+    # set default args.
     arg_dict = {
-        '-data': 'pubmed', #chosing the learning data set: trax, pubmed, movielens, software.
-        '-saving': 'pubmed', #log file name.
-        '-model': '', #type of NN for each column network. Highway/Dence/CNN?
-        '-batch': 100, #batch size for mini-batch version.
+        '-data': 'pubmed',  # chosing the learning data set: trax, pubmed, movielens, software.
+        '-saving': 'pubmed',  # log file name.
+        '-model': '',  # type of NN for each column network. Highway/Dence/CNN?
+        '-batch': 100,  # batch size for mini-batch version.
         '-y': 1,  # incase of multilabel training, decides on which one net is trained.
-        '-nlayers': 10, # number of layers in each highway network.
-        '-dim': 50, #number of nodes in each layer of each coloumn network.
-        '-shared': 1, #indicator. 1: parameters will be shared between coloumns. 0: no sharing.
-        '-nmean': 1, #regulzation factor. shoule be 1<=nmean<=number_of_relations
-        '-reg': '', #indicator: dr: dropout. nothing: no dropout.
+        '-nlayers': 10,  # number of layers in each highway network.
+        '-dim': 50,  # number of nodes in each layer of each coloumn network.
+        '-shared': 1,  # indicator. 1: parameters will be shared between coloumns. 0: no sharing.
+        '-nmean': 1,  # regulzation factor. shoule be 1<=nmean<=number_of_relations
+        '-reg': '',  # indicator: dr: dropout. nothing: no dropout.
         '-opt': 'RMS',  # or Adam. an optimizer for paramater tuning.
-        '-seed': 1234 #gargabe.
+        '-seed': 1234  # used to make random decisions repeat.
     }
     # Update args to contain the user's desired configuration.
     while i < len(argv) - 1:
@@ -33,45 +40,76 @@ def arg_passing(argv):
     arg_dict['-y'] = int(arg_dict['-y'])
     return arg_dict
 
+
 def create_mask(rel_list):
+    """
+     input:
+        rel_list: a list of size n_nodes = |sample|+|valid|+|test|. each elemt is a list of size n_rels = r.
+                  each of these lists is of a different length
+     output:
+        rel: same as relation list, but padded with 0's were no relation applies.
+              TODO: this might mean that all are in a relation with sample 0. check.
+        mask: formmated exactly like rel, but does not contain actual ids for samples in realtion, but rather 0 or 1.
+              TODO: is this used to handle the concern above?
+    """
     n_nodes = len(rel_list)
     n_rels = len(rel_list[0])
     max_neigh = 0
 
-    for node in rel_list:
-        for rel in node:
+    for sample in rel_list:
+        for rel in sample:
             max_neigh = max(max_neigh, len(rel))
 
     rel = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='int64')
     mask = numpy.zeros((n_nodes,n_rels, max_neigh), dtype='float32')
 
-    for i, node in enumerate(rel_list):
-        for j, r in enumerate(node):
+    for i, sample in enumerate(rel_list): # go over all samples, while saving a reference to to the index of a sample and the sample itself
+        for j, r in enumerate(sample): # go over all relations of an example, while saving a reference to the index of the relation and the relation itself.
             n = len(r)
             rel[i, j, : n] = r
             mask[i, j, : n] = 1.0
 
     return rel, mask
 
+
 def load_data(path):
+    """
+    input:
+        path: full path to a gzip file, containing cPickle data.
+    output: content of cPickle data, in seperate arrays all of the size.
+            this means, for every arr returned, a.shape[0] is the same
+    """
     logging.info("load_data - Started.")
-    #input: full path to a gzip file, containing cPickle data.
-    #output: content of cPickle data.
     f = gzip.open(path, 'rb')
     feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
     rel_list, rel_mask = create_mask(rel_list)
     logging.info("load_data - Ended.")
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
 
-class MiniBatchIds():
-    # a class designed to generate bacthes of ids (integers) in certain sub-ranges of 0 to n, according to
-    # a batch id and total number of batches.
-    def __init__(self, n_samples, batch_size=100):
-        self.ids = numpy.arange(n_samples)
+
+class MiniBatchIds:
+    # a class designed to generate bacthes of ids (integers) in certain sub-ranges of 0 to some n.
+    def __init__(self, n_samples, batch_size):
+        """
+        input:
+            n_samples: the number of samples in the entire training set.
+            batch_size: the size of a single batch.
+        output:
+            self: a class instance.
+        """
+        self.ids = numpy.arange(n_samples) # an array of all integers in the interval [0,n_samples-1] (including edges)
         self.batch_size = batch_size
 
     def get_mini_batch_ids(self, batch_id):
+        """
+        input:
+            batch_id: the index of the current batch. relevant ids can be calculated from the list by this index.
+        output:
+            an array of indexes, continious, decribing ids of the burrent batch.
+        operations:
+            when batch_id is 0, the ids array is suffled. this happens at the begining of every epoch, so every
+             epoch covers all train ids, but in a different order.
+        """
         if batch_id == 0:
             numpy.random.shuffle(self.ids)
-
         return self.ids[self.batch_size * batch_id : self.batch_size * (batch_id + 1)]
