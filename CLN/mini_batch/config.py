@@ -1,7 +1,7 @@
 import sys
+import logging
 sys.path.insert(0, '../../')
 import logger
-import logging
 logging.getLogger().setLevel(logging.DEBUG)
 logging.info("Logger is up and running - mini batch training.")
 
