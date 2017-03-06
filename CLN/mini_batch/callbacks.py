@@ -54,13 +54,13 @@ class SaveResult(Callback):
 
     def update_data(self, valid_x_d_c, valid_y, test_x_d_c=None, test_y=None):
         """
+        saves values on local instance. this will be used in the future.
         invoked on epoch end: last mini batch of an epoch. test_x is never none.
         :param valid_x_d_c: features of validation sample, with relations. valid_x_d_c[0] is the features.
         :param valid_y: labels of validation sample/
         :param test_x_d_c: features of test sample. with relations. test_x_d_c[0] is the features.
         :param test_y: labels of test sample.
         :return: nothing.
-        :operations: saves values on local instance.
         """
         self.valid_x_d_c = valid_x_d_c
         self.valid_y = valid_y

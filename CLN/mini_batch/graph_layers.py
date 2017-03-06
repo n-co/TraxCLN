@@ -6,10 +6,10 @@ import numpy as np
 class GraphHighway(Layer):
     def __init__(self, init='glorot_uniform', transform_bias=-2,
                  n_rel=5, mean=1,
-                 activation='linear', weights=None,
-                 W_regularizer=None, b_regularizer=None, activity_regularizer=None,
-                 W_constraint=None, b_constraint=None,
-                 bias=True, input_dim=None, **kwargs):
+                 activation='linear', weights= None,
+                 W_regularizer= None, b_regularizer= None, activity_regularizer= None,
+                 W_constraint= None, b_constraint= None,
+                 bias=True, input_dim= None, **kwargs):
         self.init = initializations.get(init)
         self.transform_bias = transform_bias
         self.activation = activations.get(activation)
@@ -29,7 +29,7 @@ class GraphHighway(Layer):
         self.input_dim = input_dim
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
-        del kwargs['rel_carry']  # TODO: what is this shit?
+        del kwargs['rel_carry']  # TODO: find out what this parameter is.
         super(GraphHighway, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -87,8 +87,8 @@ class GraphHighway(Layer):
         return (None, self.input_dim)
 
     def call(self, inputs, mask=None):
-        x = inputs[0] #feature matrix
-        context = inputs[1] # n_nodes, n_rel, dim
+        x = inputs[0]  # feature matrix
+        context = inputs[1]  # n_nodes, n_rel, dim
         # dot(V_carry, context)
         carry_gate = KerasBackend.dot(x, self.W_carry)
         carry_context = context[:, :, :, None] * self.V_carry[None, :, :, :]
@@ -100,7 +100,7 @@ class GraphHighway(Layer):
         carry_gate += carry_context
 
         if self.bias:
-             carry_gate += self.b_carry
+            carry_gate += self.b_carry
         carry_gate = activations.sigmoid(carry_gate)
 
         # dot(V, context)
@@ -119,6 +119,12 @@ class GraphHighway(Layer):
         return h
 
     def get_config(self):
+        """
+        implements an interface.
+        see documentation of interface to understande the purpose of this method.
+        :return: a dictionary describing the configuration of this layer, including the features of the interface
+                and the actual features of this class that implement it.
+        """
         config = {'init': self.init.__name__,
                   'transform_bias': self.transform_bias,
                   'activation': self.activation.__name__,
@@ -133,6 +139,7 @@ class GraphHighway(Layer):
                   'input_dim': self.input_dim}
         base_config = super(GraphHighway, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
 
 class GraphDense(Layer):
     def __init__(self, init='glorot_uniform',

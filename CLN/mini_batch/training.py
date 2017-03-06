@@ -109,7 +109,7 @@ f.write('\t\tt_acc\tt_err\n')
 f.close()
 
 
-past_hiddens = HiddenSaving(n_samples=feats.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
+hidden_data = HiddenSaving(n_samples=feats.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
 
 # created a variable containing a generator, that upon request generates a list of, possibly random, ids to select from
 # TRAIN SET.
@@ -124,43 +124,57 @@ if len(train_ids) % batch_size > 0:
 valid_x, valid_y = feats[valid_ids], labels[valid_ids]
 test_x, test_y = feats[test_ids], labels[test_ids]
 
-saveResult = SaveResult(task=task, file_result=fResult, file_params=fParams)
-callbacks = [saveResult, NanStopping()]
+performence_evaluator = SaveResult(task=task, file_result=fResult, file_params=fParams)
+callbacks = [performence_evaluator, NanStopping()]
 hidd_funcs = get_hidden_funcs(model, n_layers)
 logging.info("Last Configurations before launching network - Ended.")
+
 logging.info("CLN - Started.")
-for epoch in xrange(number_of_epochs): # train the network a few times to get more accurate results.
+for epoch in xrange(number_of_epochs):  # train the network a few times to get more accurate results.
     start = time.time()
-    for i in xrange(n_batchs): # go over all batches. all of training data will be used.
+    for i in xrange(n_batchs):  # go over all batches. all of training data will be used.
         # Extract features and labels of TRAIN set.
         mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
         train_x = feats[mini_batch_ids]
         train_y = labels[mini_batch_ids]
 
-        context = past_hiddens.get_context(mini_batch_ids)
+        # get hidden context for train set.
+        train_context = hidden_data.get_context(mini_batch_ids)
 
-        # in the last mini-batch of an epoch
-        # compute the context for valid and test, save result
+        # in the last mini-batch of an epoch compute the context for valid and test, save result.
         # update hidden states of valid and test in past_hiddens.
         if i == n_batchs - 1:
-            valid_context = past_hiddens.get_context(valid_ids)
-            test_context = past_hiddens.get_context(test_ids)
-            valid_data = [[valid_x] + valid_context, valid_y]
-            saveResult.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
+            # get hidden context for valid set.
+            valid_context = hidden_data.get_context(valid_ids)
+
+            # get hidden context for test set.
+            test_context = hidden_data.get_context(test_ids)
+
+            # performence evaluator is activated at the end on an epoch. this makes sure it is up to date.
+            # note that form one epoch to the other, the context change, not the features.
+            performence_evaluator.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
+
+            # this loop simply wrapps lists into tuples, and allow adressing each member in the tuple with a name.
+            # this loop actually runs twice in each epoch: once for valid, once for test.
+            # in each iterations, hidden data is updated for those sets.
             for x, ct, ids in zip([valid_x, test_x], [valid_context, test_context], [valid_ids, test_ids]):
                 new_hiddens = get_hiddens(model, x, ct, hidd_funcs)
-                past_hiddens.update_hidden(ids, new_hiddens)
+                hidden_data.update_hidden(ids, new_hiddens)
+
+            # define validation data.
+            valid_data = [[valid_x] + valid_context, valid_y]
         else:
             valid_data = None
 
-        his = model.fit([train_x] + context, numpy.expand_dims(train_y, -1),
+        his = model.fit([train_x] + train_context, numpy.expand_dims(train_y, -1),
                         validation_data=valid_data, verbose=0,
                         nb_epoch=1, batch_size=train_x.shape[0], shuffle=False,
-                        callbacks=callbacks) #nb_epoch: how many times to iterate. this loop imelments iterations by itself.
+                        callbacks=callbacks)
+                        # nb_epoch: how many times to iterate. this loop imelments iterations by itself.
 
-        # update hidden states of train in a mini-batch after gradient updating
-        new_train_hiddens = get_hiddens(model, train_x, context, hidd_funcs)
-        past_hiddens.update_hidden(mini_batch_ids, new_train_hiddens)
+        # update hidden data for train set.
+        new_train_hiddens = get_hiddens(model, train_x, train_context, hidd_funcs)
+        hidden_data.update_hidden(mini_batch_ids, new_train_hiddens)
     end = time.time()
     logging.info('epoch %d, runtime: %.1f' % (epoch, end - start))
     if model.stop_training:

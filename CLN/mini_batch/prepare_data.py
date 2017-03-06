@@ -6,6 +6,7 @@ import numpy
 
 def arg_passing(argv):
     """
+    a function to process input arguments.
     :param argv: the command line args that were passed.
     :return: arg_dict: a json dictionary containing args in the desire.
     """
@@ -41,7 +42,7 @@ def arg_passing(argv):
 
 def create_mask(rel_list):
     """
-
+    reformats a given relation list to contain list elements all of the same size.
     :param rel_list: a list of size n_nodes = |sample|+|valid|+|test|. each elemt is a list of size n_rels = r.
                   each of these lists is of a different length
     :return: rel: same as relation list, but padded with 0's were no relation applies.
@@ -74,6 +75,7 @@ def create_mask(rel_list):
 
 def load_data(path):
     """
+    loads data from a pcl file into memory.
     :param: path: full path to a gzip file, containing cPickle data.
     :return: content of cPickle data, in seperate arrays all of the size.
             this means, for every arr returned, a.shape[0] is the same
@@ -89,13 +91,15 @@ def load_data(path):
 class MiniBatchIds:
     """
     A class designed to generate bacthes of ids (integers) in certain sub-ranges of 0 to some n.
+    :ivar ids: an array of all integers in the interval [0,n_samples-1] (including edges)
+    :ivar: batch_size: the size of a single batch.
     """
     def __init__(self, n_samples, batch_size):
         """
         :param n_samples: the number of samples in the entire training set.
         :param batch_size: the size of a single batch.
         """
-        self.ids = numpy.arange(n_samples)  # an array of all integers in the interval [0,n_samples-1] (including edges)
+        self.ids = numpy.arange(n_samples)
         self.batch_size = batch_size
 
     def get_mini_batch_ids(self, batch_id):
