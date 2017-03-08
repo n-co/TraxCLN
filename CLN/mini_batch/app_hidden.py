@@ -6,7 +6,8 @@ class HiddenSaving():
     """
     A class designed to hold to data of hidden layets in NN.
     :ivar: curr_hidds: a list containing arrays - array per layer. each array is 2d. the size of
-                            each array is n_sample*h_dim
+                            each array is number of samples over width of layer.
+                            total size: layers*n_samples*h_dim
     :ivar: n_layers: number of hidden layers for hightway network.
     :ivar: h_dim: amount of nodes in each hidden layer.
     :ivar: n_rel: the number of relations in this network.
@@ -43,7 +44,8 @@ class HiddenSaving():
         n_nodes = len(list_ids)
         mask = self.rel_mask[list_ids]
 
-        contexts, masks = [], []
+        contexts = []
+        # masks = []
         for i in range(self.n_layers):
             context = self.curr_hidds[i][self.rel[list_ids].flatten()].reshape\
                 ([n_nodes, self.n_rel, self.n_neigh, self.h_dim])
@@ -57,16 +59,31 @@ class HiddenSaving():
 
     def update_hidden(self, list_ids, hidds):
         """
-        updates hidden information.
-        :param list_ids: ids of elements for which the update should be done.
-        :param hidds: the new hidden information.
-        :return: nothing.
+        updates hidden information for a given set of sample ids. note that all samples wil be updated with the same
+        data.
+        :param list_ids: ids of samples for which the update should be done.
+        :param hidds: the new hidden information. a list of size n_layers.
         """
         for i in range(self.n_layers):
             self.curr_hidds[i][list_ids] = hidds[i]
 
 
-def get_hidden_funcs(model, n_layers):
+def get_hidden_funcs_from_model(model, n_layers):
+    """
+        a layer that is used as input for features.
+        n_layers that are used as input for context. TODO: minus 1 for some reason
+        each input for every layers extends all prevous inputs.
+    note that this function is model related and has nothing to do with the class defined above.
+    :param model: a Keras model instance to extract data from.
+    :param n_layers: the number of highway layers in model.
+    :return: hidd_highway_funcs: a list of Keras functions.
+            the first is a function that uses inp_nodes as input, and dense1 as output
+            TODO: out dense1 is after a lot of NN configuration. should we extract these hidden layers as well?
+
+    """
+    # this code segment extracts the names of the first dense layer in the model(that is used as input
+    # for the first GH layer, and the name of the shared
+    # GraphHighway layer in the model. (we only use shared configuration so there is only 1).
     hidd_layer = None
     dense_layer = None
     for layer in model.layers:
@@ -75,8 +92,9 @@ def get_hidden_funcs(model, n_layers):
 
         if 'graph' in layer.name:
             hidd_layer = layer.name
+    # end of get names.
 
-    hidd_funcs = [K.function([model.get_layer('inp_nodes').input, K.learning_phase()],
+    hidd_highway_funcs = [K.function([model.get_layer('inp_nodes').input, K.learning_phase()],
                              [model.get_layer(dense_layer).output])]
 
     inps = [model.get_layer('inp_nodes').input]
@@ -84,15 +102,23 @@ def get_hidden_funcs(model, n_layers):
         inps.append(model.get_layer('inp_context_%d' % i).input)
         get_hidden = K.function(inps + [K.learning_phase()],
                                 [model.get_layer(hidd_layer).get_output_at(i)])
-        hidd_funcs.append(get_hidden)
+        hidd_highway_funcs.append(get_hidden)
 
-    return hidd_funcs
+    return hidd_highway_funcs
 
 
-def get_hiddens(model, x, contexts, hidd_funcs):
+def get_hiddens(x, contexts, hidd_input_funcs):
+    """
+
+    :param x: features. can be of any sample type.
+    :param contexts: context for the feaures above.
+    :param hidd_input_funcs: a list of Keras functions.
+    :return: hidds: each function is activated on the same features, and relevant
+            context. results are saved and and returned in this list.
+    """
     hidds = []
-    for i in range(len(hidd_funcs)):
+    for i in range(len(hidd_input_funcs)):
         inps = [x] + contexts[:i]
-        hidds.append(hidd_funcs[i](inps + [0])[0])
+        hidds.append(hidd_input_funcs[i](inps + [0])[0])
 
     return hidds

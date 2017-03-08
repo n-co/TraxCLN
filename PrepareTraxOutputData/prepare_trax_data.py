@@ -2,10 +2,10 @@ from config import *
 from dbscan import dbscan
 
 
-def compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_ids):
+def compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_ids, paths):
     logging.info('compress_to_gzip_file - Started.')
     f = open(pickle_path, 'wb')
-    cPickle.dump((feats, labels, rel_list, train_ids, valid_ids, test_ids), f)
+    cPickle.dump((feats, labels, rel_list, train_ids, valid_ids, test_ids, paths), f)
     f.close()
 
     in_file = file(pickle_path, 'rb')
@@ -20,15 +20,16 @@ def compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_id
 def load_gzip_file(path):
     logging.info('load_gzip_file - Started')
     f = gzip.open(path, 'rb')
-    feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
+    feats, labels, rel_list, train_ids, valid_ids, test_ids, paths = cPickle.load(f)
     logging.info('load_gzip_file - Ended.')
-    return feats, labels, rel_list, train_ids, valid_ids, test_ids
+    return feats, labels, rel_list, train_ids, valid_ids, test_ids, paths
 
 def format_ids_feats_labels_rel_list(probes):
     logging.info('format_ids_feats_labels_rel_list - Started.')
     ids = np.zeros(csv_length, dtype=int)
     labels = np.zeros(csv_length, dtype=int)
     feats = np.zeros((csv_length, product_height, product_width, product_channels), dtype=type(np.ndarray))
+    paths = np.zeros(csv_length, dtype=object)
     rel_list = np.zeros(csv_length, dtype=type(np.ndarray))
     for probe_id in probes:
         probe = probes[probe_id]
@@ -36,10 +37,11 @@ def format_ids_feats_labels_rel_list(probes):
             product.relations = np.array(product.relations)
             labels[product.id] = product.product_label  # product.product_label  # TODO: for now we took the brand_label which is an integer
             feats[product.id] = product.features
+            paths[product.id] = str(probes_dir + product.patch_url)
             rel_list[product.id] = product.relations
             ids[product.id] = product.id
     logging.info('format_ids_feats_labels_rel_list - Ended.')
-    return ids, feats, labels, rel_list
+    return ids, feats, labels, rel_list, paths
 
 
 def populate_probes(probes):
@@ -122,8 +124,8 @@ def main():
 
     probes, train_ids,valid_ids,test_ids = import_data()
     populate_probes(probes)
-    ids, feats, labels, rel_list = format_ids_feats_labels_rel_list(probes)
-    compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_ids)
+    ids, feats, labels, rel_list, paths = format_ids_feats_labels_rel_list(probes)
+    compress_to_gzip_file(feats, labels, rel_list, train_ids, valid_ids, test_ids, paths)
 
     for id in probes:
         logging.debug("%s: %d",id,len(probes[id].shelves))

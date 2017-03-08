@@ -31,5 +31,5 @@ setenv PATH ~/Programs/anaconda2/bin\:$PATH
 setenv LD_LIBRARY_PATH /usr/local/cuda-8.0/lib64\:$LD_LIBRARY_PATH
 setenv PATH /usr/local/cuda-8.0/bin\:$PATH  
 cd WorkSpace/Trax/TraxCLN/CLN/mini_batch/
-python training.py -model HCNN -data trax -dim 40 -layers 10 -nmean 2 -batch 5 -saving trax
+python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 5 -saving trax
 running prepare traxdata can be done using play for know.

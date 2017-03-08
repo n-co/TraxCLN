@@ -36,7 +36,15 @@ if 'dr' in args['-reg']:
         dropout = True
 else:
     dropout = False
-feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
+if task=='trax':
+    feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, feats_paths = load_data_trax(dataset)
+else:
+    feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
+    feats_paths = feats
+
+example_x = extract_featurs(feats_paths, [0], task)
+
+
 labels = labels.astype('int64')
 if task == 'movie':
     labels = labels[:, yidx]
@@ -65,14 +73,14 @@ logging.info("Process args and Load data - Ended.")
 logging.info("Build Model - Started")
 
 if modelType == 'Highway':
-    model = create_highway(n_layers=n_layers, hidden_dim=dim, input_dim=feats.shape[-1],
+    model = create_highway(n_layers=n_layers, hidden_dim=dim, input_dim=example_x.shape[-1],
                            n_rel=rel_list.shape[-2], n_neigh=rel_list.shape[-1],
                            n_classes=n_classes, shared=shared, nmean=nmean, dropout=dropout)
 elif modelType == 'Dense':
-    model = create_dense(n_layers=n_layers, hidden_dim=dim, input_dim=feats.shape[-1], n_rel=rel_list.shape[-2],
+    model = create_dense(n_layers=n_layers, hidden_dim=dim, input_dim=example_x.shape[-1], n_rel=rel_list.shape[-2],
                          n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean, dropout=dropout)
 elif modelType == 'HCNN':
-    model = create_hcnn(n_layers=n_layers, hidden_dim=dim, input_shape=feats[0].shape, n_rel=rel_list.shape[-2],
+    model = create_hcnn(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape, n_rel=rel_list.shape[-2],
                         n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean, dropout=dropout)
 
 model.summary()
@@ -109,7 +117,7 @@ f.write('\t\tt_acc\tt_err\n')
 f.close()
 
 
-hidden_data = HiddenSaving(n_samples=feats.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
+hidden_data = HiddenSaving(n_samples=feats_paths.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
 
 # created a variable containing a generator, that upon request generates a list of, possibly random, ids to select from
 # TRAIN SET.
@@ -121,12 +129,17 @@ if len(train_ids) % batch_size > 0:
     n_batchs += 1
 
 # Exctract features and labels of validation and sample tests.
-valid_x, valid_y = feats[valid_ids], labels[valid_ids]
-test_x, test_y = feats[test_ids], labels[test_ids]
+
+# valid_x = feats_paths[valid_ids]
+valid_x = extract_featurs(feats_paths, valid_ids, task)
+valid_y = labels[valid_ids]
+# test_x = feats_paths[test_ids]
+test_x = extract_featurs(feats_paths, test_ids, task)
+test_y = labels[test_ids]
 
 performence_evaluator = SaveResult(task=task, file_result=fResult, file_params=fParams)
 callbacks = [performence_evaluator, NanStopping()]
-hidd_funcs = get_hidden_funcs(model, n_layers)
+hidd_input_funcs = get_hidden_funcs_from_model(model, n_layers)
 logging.info("Last Configurations before launching network - Ended.")
 
 logging.info("CLN - Started.")
@@ -135,7 +148,8 @@ for epoch in xrange(number_of_epochs):  # train the network a few times to get m
     for i in xrange(n_batchs):  # go over all batches. all of training data will be used.
         # Extract features and labels of TRAIN set.
         mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
-        train_x = feats[mini_batch_ids]
+        # train_x = feats_paths[mini_batch_ids]
+        train_x = extract_featurs(feats_paths, mini_batch_ids, task)
         train_y = labels[mini_batch_ids]
 
         # get hidden context for train set.
@@ -158,7 +172,7 @@ for epoch in xrange(number_of_epochs):  # train the network a few times to get m
             # this loop actually runs twice in each epoch: once for valid, once for test.
             # in each iterations, hidden data is updated for those sets.
             for x, ct, ids in zip([valid_x, test_x], [valid_context, test_context], [valid_ids, test_ids]):
-                new_hiddens = get_hiddens(model, x, ct, hidd_funcs)
+                new_hiddens = get_hiddens(x, ct, hidd_input_funcs)
                 hidden_data.update_hidden(ids, new_hiddens)
 
             # define validation data.
@@ -173,7 +187,7 @@ for epoch in xrange(number_of_epochs):  # train the network a few times to get m
                         # nb_epoch: how many times to iterate. this loop imelments iterations by itself.
 
         # update hidden data for train set.
-        new_train_hiddens = get_hiddens(model, train_x, train_context, hidd_funcs)
+        new_train_hiddens = get_hiddens(train_x, train_context, hidd_input_funcs)
         hidden_data.update_hidden(mini_batch_ids, new_train_hiddens)
     end = time.time()
     logging.info('epoch %d, runtime: %.1f' % (epoch, end - start))

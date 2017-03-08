@@ -73,9 +73,24 @@ def create_mask(rel_list):
     return rel, mask
 
 
-def load_data(path):
+def load_data_trax(path):
     """
     loads data from a pcl file into memory.
+    :param: path: full path to a gzip file, containing cPickle data.
+    :return: content of cPickle data, in seperate arrays all of the size.
+            this means, for every arr returned, a.shape[0] is the same
+    """
+    logging.info("load_data - Started.")
+    f = gzip.open(path, 'rb')
+    feats, labels, rel_list, train_ids, valid_ids, test_ids,paths = cPickle.load(f)
+    rel_list, rel_mask = create_mask(rel_list)
+    logging.info("load_data - Ended.")
+    return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids,paths
+
+
+def load_data(path):
+    """
+    loads data from a pcl file into memory. for every dataset but trax.
     :param: path: full path to a gzip file, containing cPickle data.
     :return: content of cPickle data, in seperate arrays all of the size.
             this means, for every arr returned, a.shape[0] is the same
@@ -86,7 +101,6 @@ def load_data(path):
     rel_list, rel_mask = create_mask(rel_list)
     logging.info("load_data - Ended.")
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
-
 
 class MiniBatchIds:
     """
@@ -112,3 +126,25 @@ class MiniBatchIds:
         if batch_id == 0:
             numpy.random.shuffle(self.ids)
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
+
+
+def extract_featurs(feats_paths, ids, task):
+    """
+    :param feats_paths: paths to all products.
+    :param ids: requested ids.
+    :param: task: the task this NN is performing
+    :return: a tensor containing the feautures in desired format.
+    """
+    logging.debug("loading images from disk - started.")
+    logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths),len(ids), task))
+    size_of_db = len(feats_paths)
+    feats = np.zeros((size_of_db, product_height, product_width, product_channels), dtype=type(np.ndarray))
+    ans = None
+    if task == 'trax':
+        for iden in ids:
+            feats[iden] = ocv.imread(feats_paths[iden])
+        ans = feats[ids]
+    else:
+        ans = feats_paths[ids]
+    logging.debug("loading images from disk - ended.")
+    return ans
