@@ -120,5 +120,4 @@ def get_hiddens(x, contexts, hidd_input_funcs):
     for i in range(len(hidd_input_funcs)):
         inps = [x] + contexts[:i]
         hidds.append(hidd_input_funcs[i](inps + [0])[0])
-
     return hidds

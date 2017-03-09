@@ -8,6 +8,8 @@ from callbacks import *
 from app_hidden import *
 from keras.optimizers import *
 from keras.objectives import *
+from keras.utils.visualize_util import plot as kplt
+
 
 # Load data
 logging.info("Process args and Load data - Started.")
@@ -36,13 +38,13 @@ if 'dr' in args['-reg']:
         dropout = True
 else:
     dropout = False
-if task=='trax':
-    feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, feats_paths = load_data_trax(dataset)
+if task =='trax':
+    labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths = load_data_trax(dataset)
 else:
     feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
-    feats_paths = feats
+    paths = feats
 
-example_x = extract_featurs(feats_paths, [0], task)
+example_x = extract_featurs(paths, [0], task)
 
 
 labels = labels.astype('int64')
@@ -59,8 +61,10 @@ else:
     loss = binary_crossentropy
 
 # define the optimizer for weights finding.
-all_optimizers = {'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
-       'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)}
+all_optimizers = {
+    'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
+    'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+    }
 # opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
 # opt = Adagrad(learning_rate=0.01, epsilon=1e-8)
 # opt = Adadelta(learning_rate=1.0, rho=0.95, epsilon=1e-8)
@@ -99,6 +103,8 @@ f = open(fModel, 'w')
 f.write(json_string)
 f.close()
 
+kplt(model, to_file=models_path + saving + '.png', show_shapes=True)
+
 # Define path for saving results.
 fParams = best_models_path + saving + '.hdf5'
 
@@ -117,7 +123,7 @@ f.write('\t\tt_acc\tt_err\n')
 f.close()
 
 
-hidden_data = HiddenSaving(n_samples=feats_paths.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
+hidden_data = HiddenSaving(n_samples=paths.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
 
 # created a variable containing a generator, that upon request generates a list of, possibly random, ids to select from
 # TRAIN SET.
@@ -130,11 +136,9 @@ if len(train_ids) % batch_size > 0:
 
 # Exctract features and labels of validation and sample tests.
 
-# valid_x = feats_paths[valid_ids]
-valid_x = extract_featurs(feats_paths, valid_ids, task)
+valid_x = extract_featurs(paths, valid_ids, task)
 valid_y = labels[valid_ids]
-# test_x = feats_paths[test_ids]
-test_x = extract_featurs(feats_paths, test_ids, task)
+test_x = extract_featurs(paths, test_ids, task)
 test_y = labels[test_ids]
 
 performence_evaluator = SaveResult(task=task, file_result=fResult, file_params=fParams)
@@ -143,18 +147,34 @@ hidd_input_funcs = get_hidden_funcs_from_model(model, n_layers)
 logging.info("Last Configurations before launching network - Ended.")
 
 logging.info("CLN - Started.")
+
+def learn_about(context):
+    ans = True
+    subject = context[0][0][0]
+    logging.warn(str(subject.shape))
+    first = subject[0]
+    for ii in range(subject.shape[0]):
+        # logging.warn(str(type(subject[ii])))
+        if abs(subject[ii] - first) > 1e-6:
+            ans = False
+    logging.warn(len(context))
+    logging.warn((context[0].shape))
+    logging.warn(str(ans))
+    return ans
+
+
 for epoch in xrange(number_of_epochs):  # train the network a few times to get more accurate results.
     start = time.time()
     for i in xrange(n_batchs):  # go over all batches. all of training data will be used.
         # Extract features and labels of TRAIN set.
         mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
         # train_x = feats_paths[mini_batch_ids]
-        train_x = extract_featurs(feats_paths, mini_batch_ids, task)
+        train_x = extract_featurs(paths, mini_batch_ids, task)
         train_y = labels[mini_batch_ids]
 
         # get hidden context for train set.
         train_context = hidden_data.get_context(mini_batch_ids)
-
+        learn_about(train_context)
         # in the last mini-batch of an epoch compute the context for valid and test, save result.
         # update hidden states of valid and test in past_hiddens.
         if i == n_batchs - 1:

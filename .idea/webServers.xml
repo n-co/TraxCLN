@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="e884dacf-1f8f-43a1-bf19-1f70e2573008" name="TraxCLNPersonalNir" url="http://localhost">
-        <fileTransfer host="localhost" port="2224" rootFolder="/users/studs/bsc/2015/nirse" accessType="SFTP">
+        <fileTransfer host="localhost" port="2224" accessType="SFTP">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" />
           </advancedOptions>

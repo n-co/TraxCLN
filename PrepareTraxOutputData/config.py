@@ -18,11 +18,12 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)
 logging.info("Logger is up and running!")
 
-csv_path = "../TraxInputData/data.csv"
-probes_dir = "../TraxInputData/Probes/"
-framed_probes_dir = "../TraxInputData/FramedProbes/"
-products_dir = "../TraxInputData/Products/"
-pickle_path = "../TraxOutputData/data/trax.pkl"
+raw_data_dir = "/vildata/rawdata/Trax/proj_nir_noam/TraxInputData"
+csv_path = raw_data_dir + "/data.csv"
+probes_dir = raw_data_dir + "/Probes/"
+framed_probes_dir = raw_data_dir + "FramedProbes/"
+products_dir = raw_data_dir + "/Products/"
+pickle_path = raw_data_dir + "/trax.pkl"
 
 
 product_height =32

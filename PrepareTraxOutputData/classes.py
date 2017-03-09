@@ -4,6 +4,7 @@ import json
 import cv2 as ocv
 import numpy as np
 
+
 class StringToIntConvertor:
 
     def __init__(self):
@@ -11,22 +12,24 @@ class StringToIntConvertor:
         self.mapping = {}
         self.counter = 0
 
-    def toInt(self,s):
+    def string_to_int(self, s):
         ans = -1
         if s in self.mapping:
             ans = self.mapping[s]
         else:
             self.mapping[s] = self.counter
             ans = self.counter
-            self.counter+=1
+            self.counter += 1
         return ans
+
 sti_convertor = StringToIntConvertor()
+
 
 class Probe:
     def __init__(self, probe_id):
         self.id = str(probe_id)
         self.path = str(conf.probes_dir + probe_id + ".jpg")
-        self.features = ocv.imread(self.path)
+        # self.features = ocv.imread(self.path)
 
         self.rights = None
         self.lefts = None
@@ -56,7 +59,7 @@ class Probe:
 
 class Product:
     def __init__(self, id, brand_code, sample_type, brand_label, form_factor_label, mask, object_label, patch_id, patch_url,
-                 probe_id, product_label, voting_confidence, probe_obj ):
+                 probe_id, product_label, voting_confidence, probe_obj):
         self.id = int(id)
         self.brand_code = str(brand_code)
         self.sample_type = str(sample_type)
@@ -68,14 +71,14 @@ class Product:
         self.patch_id = int(patch_id)
         self.patch_url = str(patch_url)
         self.probe_id = str(probe_id)
-        self.product_label = sti_convertor.toInt(product_label)
+        self.product_label = sti_convertor.string_to_int(product_label)
         voting_confidence = voting_confidence.replace('\'', '\"')
         voting_confidence = voting_confidence.replace('u', '')
         self.voting_confidence = json.loads(voting_confidence)  # TODO: convert to json
         self.probe_obj = probe_obj
 
         self.path = conf.products_dir + patch_url + ".jpg"
-        self.features = self.populate_features()
+        # self.features = self.populate_features()
         self.relations = [[], []]
         self.index_in_probe = -1
 

@@ -5,7 +5,7 @@
       <paths name="TraxCLNPersonalNir">
         <serverdata>
           <mappings>
-            <mapping deploy="/WorkSpace/Trax/TraxCLN" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/vildata/code/Trax/proj_nir_noam" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

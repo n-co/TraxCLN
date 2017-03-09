@@ -150,8 +150,8 @@ def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, sh
     image_input_nodes = Input(shape=input_shape, dtype='float32', name='inp_nodes')
     contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
                 for i in range(n_layers)]
-
-    cnn_nodes = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), activation=cnn_act, border_mode='same')(image_input_nodes)
+    cnn_nodes = image_input_nodes
+    cnn_nodes = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), activation=cnn_act, border_mode='same')(cnn_nodes)
     cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
     cnn_nodes = Convolution2D(32, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
     cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)

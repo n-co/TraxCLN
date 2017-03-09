@@ -82,10 +82,12 @@ def load_data_trax(path):
     """
     logging.info("load_data - Started.")
     f = gzip.open(path, 'rb')
-    feats, labels, rel_list, train_ids, valid_ids, test_ids,paths = cPickle.load(f)
+    labels, rel_list, train_ids, valid_ids, test_ids, paths = cPickle.load(f)
+    logging.debug(str(paths))
+
     rel_list, rel_mask = create_mask(rel_list)
     logging.info("load_data - Ended.")
-    return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids,paths
+    return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths
 
 
 def load_data(path):
@@ -101,6 +103,7 @@ def load_data(path):
     rel_list, rel_mask = create_mask(rel_list)
     logging.info("load_data - Ended.")
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
+
 
 class MiniBatchIds:
     """

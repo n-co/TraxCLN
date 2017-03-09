@@ -1,4 +1,4 @@
-open a terminal an runt the following command inorder to bridge between local machine and lvs gateway:
+open a terminal and run the following command in order to bridge between local machine and lvs gateway:
     ssh -Y -L 2224:lab1105f:22 nirse@lvs.cs.bgu.ac.il
 this terminal must stay opened.
 for testing purposes only, open a new terminal.
@@ -18,8 +18,10 @@ configuring deployment connection:
         type: SFTP.
         host: localhost.
         port: 2224
-        root path(autodetect): /users/studs/bsc/2015/nirse
-        go to mapping tabs. set project root path to: /WorkSpace/Trax/TraxCLN (note root is defined as home, so you are ok).
+        root path: clicking on autodetect will give you: /users/studs/bsc/2015/nirse. we should just place "/". 
+        (old, igonre this) go to mapping tabs. set project root path to: /WorkSpace/Trax/TraxCLN (note root is defined as home, so you
+        are ok).
+        go to mapping tabs. set project root path to: /vildata/code/Trax/proj_nir_noam
 deploying:
     tools->deployment>browse. if tree is not opened because no credentials are set, click on the button and set them.
     tools->deployment>upload
@@ -30,6 +32,6 @@ tools->start SSH session->TraxCLNPersonalNir
 setenv PATH ~/Programs/anaconda2/bin\:$PATH
 setenv LD_LIBRARY_PATH /usr/local/cuda-8.0/lib64\:$LD_LIBRARY_PATH
 setenv PATH /usr/local/cuda-8.0/bin\:$PATH  
-cd WorkSpace/Trax/TraxCLN/CLN/mini_batch/
+cd vildata/code/Trax/proj_nir_noam/CLN/mini_batch/
 python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 5 -saving trax
 running prepare traxdata can be done using play for know.
