@@ -11,7 +11,6 @@ from keras.objectives import *
 from keras.utils.visualize_util import plot as kplt
 
 
-# Load data
 logging.info("Process args and Load data - Started.")
 args = arg_passing(sys.argv)
 seed = args['-seed']
@@ -38,13 +37,14 @@ if 'dr' in args['-reg']:
         dropout = True
 else:
     dropout = False
-if task =='trax':
+if task == 'trax':
     labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths = load_data_trax(dataset)
 else:
     feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
     paths = feats
 
 example_x = extract_featurs(paths, [0], task)
+
 
 
 labels = labels.astype('int64')
@@ -72,8 +72,8 @@ all_optimizers = {
 # opt = Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-8
 selected_optimizer = all_optimizers[args['-opt']]
 logging.info("Process args and Load data - Ended.")
+stop_and_read(run_mode)
 
-# Build Model.
 logging.info("Build Model - Started")
 
 if modelType == 'Highway':
@@ -91,7 +91,7 @@ model.summary()
 model.compile(optimizer=selected_optimizer, loss=loss)
 
 logging.info("Build Model - Ended.")
-
+stop_and_read(run_mode)
 
 logging.info("Last Configurations before launching network - Started.")
 # Log information so far.
@@ -145,23 +145,9 @@ performence_evaluator = SaveResult(task=task, file_result=fResult, file_params=f
 callbacks = [performence_evaluator, NanStopping()]
 hidd_input_funcs = get_hidden_funcs_from_model(model, n_layers)
 logging.info("Last Configurations before launching network - Ended.")
+stop_and_read(run_mode)
 
 logging.info("CLN - Started.")
-
-def learn_about(context):
-    ans = True
-    subject = context[0][0][0]
-    logging.warn(str(subject.shape))
-    first = subject[0]
-    for ii in range(subject.shape[0]):
-        # logging.warn(str(type(subject[ii])))
-        if abs(subject[ii] - first) > 1e-6:
-            ans = False
-    logging.warn(len(context))
-    logging.warn((context[0].shape))
-    logging.warn(str(ans))
-    return ans
-
 
 for epoch in xrange(number_of_epochs):  # train the network a few times to get more accurate results.
     start = time.time()
@@ -174,7 +160,7 @@ for epoch in xrange(number_of_epochs):  # train the network a few times to get m
 
         # get hidden context for train set.
         train_context = hidden_data.get_context(mini_batch_ids)
-        learn_about(train_context)
+        learn_about(train_context, run_mode)
         # in the last mini-batch of an epoch compute the context for valid and test, save result.
         # update hidden states of valid and test in past_hiddens.
         if i == n_batchs - 1:

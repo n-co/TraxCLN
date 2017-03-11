@@ -38,7 +38,7 @@ def format_ids_feats_labels_rel_list(probes):
             product.relations = np.array(product.relations)
             labels[product.id] = product.product_label
             # feats[product.id] = product.features
-            paths[product.id] = str(probes_dir + product.patch_url)
+            paths[product.id] = str(products_dir + product.patch_url)
             rel_list[product.id] = product.relations
             ids[product.id] = product.id
     logging.info('format_ids_feats_labels_rel_list - Ended.')

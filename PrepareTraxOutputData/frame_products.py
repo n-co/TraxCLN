@@ -28,9 +28,8 @@ def frame_products():
             draw.line((x1, y1, x1, y2), fill=255, width=10)  # left line
             draw.line((x1, y2, x2, y2), fill=255, width=10)  # bottom line
 
-    for id in probes:
-        probes[id].save(framed_probes_dir + id + ".jpg")
-
+    for probe_id in probes:
+        probes[probe_id].save(framed_probes_dir + probe_id + ".jpg")
 
 
 frame_products()

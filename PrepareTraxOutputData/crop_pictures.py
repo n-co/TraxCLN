@@ -17,7 +17,7 @@ def crop_probes(csv_path, probes_dir, products_dir, product_hw):
         reader = csv.reader(lines)
         i = 1
         prev_probe_id = None
-        probe_img = None;
+        probe_img = None
         for row in reader:
             probe_id = row[9]
             probe_path = probes_dir + probe_id + ".jpg"
@@ -32,7 +32,8 @@ def crop_probes(csv_path, probes_dir, products_dir, product_hw):
             cropped = ocv.resize(cropped, product_hw)  # resize image
 
             patch_url = row[8]
-            # product = Product(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # product = Product(row[0], row[1], row[2], row[3], row[4], row[5],
+            #                   row[6], row[7], row[8], row[9], row[10], row[11])
             # cropped = product.features
             ocv.imwrite(products_dir + patch_url, cropped)
             if i % 1000 == 0:

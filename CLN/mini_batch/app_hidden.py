@@ -1,8 +1,9 @@
 import numpy
 import keras.backend as K
+from config import *
 
 
-class HiddenSaving():
+class HiddenSaving:
     """
     A class designed to hold to data of hidden layets in NN.
     :ivar: curr_hidds: a list containing arrays - array per layer. each array is 2d. the size of
@@ -64,8 +65,15 @@ class HiddenSaving():
         :param list_ids: ids of samples for which the update should be done.
         :param hidds: the new hidden information. a list of size n_layers.
         """
+        logging.debug("update_hidden - Started.")
+        logging.debug("analyzing info for 7th layer")
+        logging.debug("ids:" + str(list_ids))
+        logging.debug("hidds[0](firsr layer) shape:" + str(hidds[0].shape))
+        logging.debug("the sum of this: " +str(np.sum(hidds[0])))
         for i in range(self.n_layers):
             self.curr_hidds[i][list_ids] = hidds[i]
+        logging.debug("update_hidden - Ended.")
+        stop_and_read(run_mode)
 
 
 def get_hidden_funcs_from_model(model, n_layers):
@@ -119,5 +127,8 @@ def get_hiddens(x, contexts, hidd_input_funcs):
     hidds = []
     for i in range(len(hidd_input_funcs)):
         inps = [x] + contexts[:i]
-        hidds.append(hidd_input_funcs[i](inps + [0])[0])
+        res = hidd_input_funcs[i](inps + [0])[0]
+        hidds.append(res)
+        logging.debug(str(res))
+        stop_and_read(run_mode)
     return hidds

@@ -4,7 +4,9 @@ import cv2 as ocv
 import numpy as np
 sys.path.insert(0, '../../')
 import logger
-logging.getLogger().setLevel(logging.DEBUG)
+from tools import *
+logging.getLogger().setLevel(logging.INFO)
+run_mode = 'run'
 logging.info("Logger is up and running - mini batch training.")
 
 product_height =32

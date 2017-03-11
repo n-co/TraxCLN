@@ -131,22 +131,47 @@ class MiniBatchIds:
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
 
 
+# def extract_featurs(feats_paths, ids, task):
+#     """
+#     :param feats_paths: paths to all products.
+#     :param ids: requested ids.
+#     :param: task: the task this NN is performing
+#     :return: a tensor containing the feautures in desired format.
+#     """
+#     logging.debug("loading images from disk - started.")
+#     logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths),len(ids), task))
+#     size_of_db = len(feats_paths)
+#     feats = np.zeros((size_of_db, product_height, product_width, product_channels), dtype=type(np.ndarray))
+#     ans = None
+#     if task == 'trax':
+#         for iden in ids:
+#             feats[iden] = ocv.imread(feats_paths[iden])
+#         ans = feats[ids]
+#     else:
+#         ans = feats_paths[ids]
+#     logging.debug("loading images from disk - ended.")
+#     return ans
+
 def extract_featurs(feats_paths, ids, task):
     """
     :param feats_paths: paths to all products.
     :param ids: requested ids.
-    :param: task: the task this NN is performing
+    :param task: the task this NN is performing
     :return: a tensor containing the feautures in desired format.
     """
     logging.debug("loading images from disk - started.")
-    logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths),len(ids), task))
-    size_of_db = len(feats_paths)
-    feats = np.zeros((size_of_db, product_height, product_width, product_channels), dtype=type(np.ndarray))
+    logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths), len(ids), task))
+    feats = np.zeros((len(ids), product_height, product_width, product_channels), dtype=type(np.ndarray))
     ans = None
     if task == 'trax':
-        for iden in ids:
-            feats[iden] = ocv.imread(feats_paths[iden])
-        ans = feats[ids]
+        for ii in range(len(ids)):
+            # logging.error(str(ii))
+            # logging.error(str(ids[ii]))
+            # logging.error(str(feats_paths[ids[ii]]))
+            feats[ii] = ocv.imread(feats_paths[ids[ii]])  #TODO: remove flatten
+            # logging.error(str(feats[ii]))
+            # stop_and_read('debug')
+        ans = feats
     else:
         ans = feats_paths[ids]
     logging.debug("loading images from disk - ended.")
