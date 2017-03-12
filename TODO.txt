@@ -26,3 +26,7 @@ Chat with Aviv:
     we might also need to find a way not to hold all of our valid/test features on ram. but, all meta data is in ram.
     Aviv uses SGD optimizer.
     make sure evry epoch is suffled. i did and it was like that.
+
+
+    change validation and test to be larger samples. using minibatches.c
+    fix sizes of convoloutional filters, since they don't fit in memory.

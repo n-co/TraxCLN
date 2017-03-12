@@ -4,12 +4,13 @@ import cPickle
 import numpy
 
 
-def arg_passing(argv):
+def process_input_args(argv):
     """
     a function to process input arguments.
     :param argv: the command line args that were passed.
     :return: arg_dict: a json dictionary containing args in the desire.
     """
+    logging.info("process_input_args: Started.")
     i = 1
     # set default args.
     arg_dict = {
@@ -37,6 +38,7 @@ def arg_passing(argv):
     arg_dict['-nmean'] = int(arg_dict['-nmean'])
     arg_dict['-seed'] = int(arg_dict['-seed'])
     arg_dict['-y'] = int(arg_dict['-y'])
+    logging.info("process_input_args: Ended.")
     return arg_dict
 
 
@@ -161,7 +163,7 @@ def extract_featurs(feats_paths, ids, task):
     """
     logging.debug("loading images from disk - started.")
     logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths), len(ids), task))
-    feats = np.zeros((len(ids), product_height, product_width, product_channels), dtype=type(np.ndarray))
+    feats = np.zeros((len(ids), product_width, product_height, product_channels), dtype=type(np.ndarray))
     ans = None
     if task == 'trax':
         for ii in range(len(ids)):

@@ -1,7 +1,7 @@
 import numpy
 import sys
 import prepare_data
-args = prepare_data.arg_passing(sys.argv)
+args = prepare_data.process_input_args(sys.argv)
 seed = args['-seed']
 numpy.random.seed(seed)
 

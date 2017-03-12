@@ -94,7 +94,7 @@ def show_product_image(window_name, probes, probe_id, product_index):
 
 def import_data():
     logging.info("import_data - Started.")
-    global csv_length  # declare that the variable is global so it can be modified.
+    global csv_length  # deccd cdcdlare that the variable is global so it can be modified.
     probes = {}
     sample_types = {
         "train": np.array([], dtype=int),

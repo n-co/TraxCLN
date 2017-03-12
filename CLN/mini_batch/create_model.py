@@ -151,24 +151,25 @@ def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, sh
     contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
                 for i in range(n_layers)]
     cnn_nodes = image_input_nodes
-    cnn_nodes = Convolution2D(32, 3, 3, input_shape=(3, 32, 32), activation=cnn_act, border_mode='same')(cnn_nodes)
+    #TODO: verify the order of args height and width
+    cnn_nodes = Convolution2D(4, 3, 3, input_shape=(product_channels, product_height, product_width), activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(4, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
+
+    cnn_nodes = Convolution2D(8, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(8, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
+
+    cnn_nodes = Convolution2D(16, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(16, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
+
+    cnn_nodes = Convolution2D(32, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
     cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
     cnn_nodes = Convolution2D(32, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
-    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
-
-    cnn_nodes = Convolution2D(64, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
-    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
-    cnn_nodes = Convolution2D(64, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
-    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
-
-    cnn_nodes = Convolution2D(128, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
-    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
-    cnn_nodes = Convolution2D(128, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
-    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
-
-    cnn_nodes = Convolution2D(256, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
-    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
-    cnn_nodes = Convolution2D(256, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
     cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
     cnn_nodes = Flatten()(cnn_nodes)
@@ -204,5 +205,5 @@ def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, sh
     top_nodes = Activation(activation=top_act)(top_nodes)
 
     model = Model(input=[image_input_nodes] + contexts, output=[top_nodes])
-    logging.info("create_hcnn - Ended. returned a model.")
+    logging.info("create_hcnn - Ended.")
     return model

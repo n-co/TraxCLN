@@ -12,7 +12,7 @@ from keras.utils.visualize_util import plot as kplt
 
 
 logging.info("Process args and Load data - Started.")
-args = arg_passing(sys.argv)
+args = process_input_args(sys.argv)
 seed = args['-seed']
 numpy.random.seed(seed)
 

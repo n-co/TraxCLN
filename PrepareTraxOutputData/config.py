@@ -26,8 +26,8 @@ products_dir = raw_data_dir + "/Products/"
 pickle_path = raw_data_dir + "/trax.pkl"
 
 
-product_height =32
-product_width = 32
+product_height = 200
+product_width = 600
 product_channels = 3
 product_shape = (product_height, product_width, product_channels)
 product_hw = (product_height, product_width)

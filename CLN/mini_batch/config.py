@@ -5,12 +5,12 @@ import numpy as np
 sys.path.insert(0, '../../')
 import logger
 from tools import *
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.DEBUG)
 run_mode = 'run'
 logging.info("Logger is up and running - mini batch training.")
 
-product_height =32
-product_width = 32
+product_height = 200
+product_width = 600
 product_channels = 3
 product_shape = (product_height, product_width, product_channels)
 product_hw = (product_height, product_width)
