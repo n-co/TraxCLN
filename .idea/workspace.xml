@@ -2,16 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c6b2cc89-7590-4b65-a6a3-b77b09ab1bac" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/PrepareTraxOutputData/analyze_sizes.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CLN/full_batch/training.py" afterPath="$PROJECT_DIR$/CLN/full_batch/training.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CLN/mini_batch/app_hidden.py" afterPath="$PROJECT_DIR$/CLN/mini_batch/app_hidden.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CLN/mini_batch/config.py" afterPath="$PROJECT_DIR$/CLN/mini_batch/config.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CLN/mini_batch/create_model.py" afterPath="$PROJECT_DIR$/CLN/mini_batch/create_model.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CLN/mini_batch/prepare_data.py" afterPath="$PROJECT_DIR$/CLN/mini_batch/prepare_data.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CLN/mini_batch/training.py" afterPath="$PROJECT_DIR$/CLN/mini_batch/training.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/PrepareTraxOutputData/config.py" afterPath="$PROJECT_DIR$/PrepareTraxOutputData/config.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/PrepareTraxOutputData/prepare_trax_data.py" afterPath="$PROJECT_DIR$/PrepareTraxOutputData/prepare_trax_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/TODO.txt" afterPath="$PROJECT_DIR$/TODO.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tools.py" afterPath="$PROJECT_DIR$/tools.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -43,12 +39,46 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="create_model.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/CLN/mini_batch/create_model.py">
+      <file leaf-file-name="training.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/CLN/mini_batch/training.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="371">
-              <caret line="175" column="54" lean-forward="true" selection-start-line="175" selection-start-column="54" selection-end-line="175" selection-end-column="54" />
+            <state relative-caret-position="414">
+              <caret line="149" column="63" lean-forward="true" selection-start-line="149" selection-start-column="63" selection-end-line="149" selection-end-column="63" />
+              <folding>
+                <element signature="e#0#20#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="app_hidden.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/CLN/mini_batch/app_hidden.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1045">
+              <caret line="29" column="60" lean-forward="true" selection-start-line="29" selection-start-column="60" selection-end-line="29" selection-end-column="60" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="callbacks.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/CLN/mini_batch/callbacks.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="205">
+              <caret line="54" column="8" lean-forward="false" selection-start-line="54" selection-start-column="8" selection-end-line="54" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="prepare_data.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/CLN/mini_batch/prepare_data.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="401">
+              <caret line="241" column="36" lean-forward="true" selection-start-line="241" selection-start-column="36" selection-end-line="241" selection-end-column="36" />
+              <folding>
+                <element signature="e#0#20#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -64,14 +94,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>do_test</find>
-      <find>update</find>
-      <find>update_data</find>
-      <find>valid_x</find>
-      <find>LRScheduler</find>
-      <find>nan</find>
-      <find>save_result</find>
-      <find>callbacks</find>
       <find>get_hi</find>
       <find>funcs</find>
       <find>x_d_c</find>
@@ -85,15 +107,23 @@
       <find>extra</find>
       <find>feats_paths.shape</find>
       <find>feats_paths</find>
-      <find>war</find>
       <find>hidd</find>
-      <find>warn</find>
       <find>feat</find>
       <find>learn_about</find>
       <find>update_hi</find>
       <find>paths</find>
       <find>rel_</find>
       <find>'debug'</find>
+      <find>batch_size</find>
+      <find>performence_evaluator</find>
+      <find>len(train_ids</find>
+      <find>len(train_ids)</find>
+      <find>.warn</find>
+      <find>.war</find>
+      <find>warning</find>
+      <find>war</find>
+      <find>warn</find>
+      <find>load</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$</dir>
@@ -118,22 +148,22 @@
         <option value="$PROJECT_DIR$/logger.py" />
         <option value="$PROJECT_DIR$/CLN/mini_batch/models/callbacks.py" />
         <option value="$PROJECT_DIR$/CLN/mini_batch/graph_layers.py" />
-        <option value="$PROJECT_DIR$/CLN/mini_batch/callbacks.py" />
         <option value="$PROJECT_DIR$/PrepareTraxOutputData/classes.py" />
         <option value="$PROJECT_DIR$/PrepareTraxOutputData/frame_products.py" />
         <option value="$PROJECT_DIR$/PrepareTraxOutputData/crop_pictures.py" />
         <option value="$PROJECT_DIR$/CLN/tools.py" />
-        <option value="$PROJECT_DIR$/tools.py" />
         <option value="$PROJECT_DIR$/CLN/mini_batch/app_hidden_based_on_new_model.py" />
-        <option value="$PROJECT_DIR$/CLN/mini_batch/training.py" />
-        <option value="$PROJECT_DIR$/CLN/mini_batch/app_hidden.py" />
         <option value="$PROJECT_DIR$/PrepareTraxOutputData/analyze_sizes.py" />
         <option value="$PROJECT_DIR$/PrepareTraxOutputData/config.py" />
         <option value="$PROJECT_DIR$/PrepareTraxOutputData/prepare_trax_data.py" />
-        <option value="$PROJECT_DIR$/CLN/mini_batch/prepare_data.py" />
-        <option value="$PROJECT_DIR$/CLN/mini_batch/config.py" />
         <option value="$PROJECT_DIR$/CLN/mini_batch/create_model.py" />
         <option value="$PROJECT_DIR$/TODO.txt" />
+        <option value="$PROJECT_DIR$/CLN/mini_batch/callbacks.py" />
+        <option value="$PROJECT_DIR$/tools.py" />
+        <option value="$PROJECT_DIR$/CLN/mini_batch/training.py" />
+        <option value="$PROJECT_DIR$/CLN/mini_batch/prepare_data.py" />
+        <option value="$PROJECT_DIR$/CLN/mini_batch/config.py" />
+        <option value="$PROJECT_DIR$/CLN/mini_batch/app_hidden.py" />
       </list>
     </option>
   </component>
@@ -144,8 +174,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="width" value="1616" />
-    <option name="height" value="825" />
+    <option name="width" value="1920" />
+    <option name="height" value="1050" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -162,7 +192,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -223,6 +252,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
@@ -609,20 +639,20 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1616" height="825" extended-state="6" />
-    <editor active="false" />
+    <frame x="0" y="0" width="1920" height="1050" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32944608" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32944608" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32944608" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3265306" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32930845" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32944608" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3265306" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32215744" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.29008746" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1656051" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21910828" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3299363" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3265306" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.28979144" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16542156" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22145145" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3299363" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32601535" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39941692" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -633,25 +663,6 @@
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
-    <layout-to-restore>
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32928178" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24960423" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="processedProjectFiles" value="true" />
@@ -661,7 +672,13 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="15" />
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/CLN/mini_batch/prepare_data.py</url>
+          <option name="timeStamp" value="15" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="16" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -670,9 +687,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="954">
           <caret line="53" column="68" lean-forward="false" selection-start-line="53" selection-start-column="68" selection-end-line="53" selection-end-column="68" />
-          <folding>
-            <element signature="e#22#43#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -694,7 +708,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="972">
           <caret line="54" column="30" lean-forward="false" selection-start-line="54" selection-start-column="30" selection-end-line="54" selection-end-column="30" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -702,7 +715,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="216">
           <caret line="12" column="0" lean-forward="false" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -717,9 +729,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#22#43#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -804,28 +813,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharm2016.3/system/remote_sources/-1606809995/609332869/keras/backend/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#38#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.PyCharm2016.3/system/remote_sources/-1606809995/609332869/keras/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="366" column="8" lean-forward="false" selection-start-line="366" selection-start-column="8" selection-end-line="366" selection-end-column="8" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -840,7 +831,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
           <caret line="1083" column="40" lean-forward="true" selection-start-line="1083" selection-start-column="40" selection-end-line="1083" selection-end-column="40" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -848,7 +838,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-720">
           <caret line="1709" column="4" lean-forward="false" selection-start-line="1709" selection-start-column="4" selection-end-line="1709" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -879,6 +868,85 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="234">
           <caret line="15" column="18" lean-forward="true" selection-start-line="15" selection-start-column="18" selection-end-line="15" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/frame_products.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/dbscan.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-322">
+          <caret line="8" column="52" lean-forward="false" selection-start-line="8" selection-start-column="52" selection-end-line="8" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CLN/tools.py" />
+    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/app_hidden_based_on_new_model.py" />
+    <entry file="file://$PROJECT_DIR$/logger.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="92">
+          <caret line="55" column="39" lean-forward="true" selection-start-line="55" selection-start-column="39" selection-end-line="55" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/analyze_sizes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="295">
+          <caret line="42" column="51" lean-forward="true" selection-start-line="42" selection-start-column="51" selection-end-line="42" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2016.3/system/remote_sources/-1606809995/609332869/keras/layers/convolutional.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="116">
+          <caret line="328" column="42" lean-forward="true" selection-start-line="328" selection-start-column="42" selection-end-line="328" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/crop_pictures.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="39" column="50" lean-forward="true" selection-start-line="39" selection-start-column="50" selection-end-line="39" selection-end-column="50" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/classes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="107" column="33" lean-forward="true" selection-start-line="107" selection-start-column="33" selection-end-line="107" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/prepare_trax_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="43" column="56" lean-forward="true" selection-start-line="43" selection-start-column="56" selection-end-line="43" selection-end-column="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="853">
+          <caret line="58" column="7" lean-forward="true" selection-start-line="58" selection-start-column="7" selection-end-line="58" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/TODO.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="335">
+          <caret line="31" column="58" lean-forward="false" selection-start-line="31" selection-start-column="58" selection-end-line="31" selection-end-column="58" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2016.3/system/remote_sources/-1606809995/609332869/keras/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="241">
+          <caret line="711" column="23" lean-forward="false" selection-start-line="711" selection-start-column="23" selection-end-line="711" selection-end-column="23" />
           <folding />
         </state>
       </provider>
@@ -891,25 +959,23 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/frame_products.py">
+    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/create_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#20#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/dbscan.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-322">
-          <caret line="8" column="52" lean-forward="false" selection-start-line="8" selection-start-column="52" selection-end-line="8" selection-end-column="52" />
+        <state relative-caret-position="195">
+          <caret line="25" column="40" lean-forward="false" selection-start-line="25" selection-start-column="40" selection-end-line="25" selection-end-column="40" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/tools.py">
+    <entry file="file://$PROJECT_DIR$/tools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="17" column="27" lean-forward="false" selection-start-line="17" selection-start-column="27" selection-end-line="17" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CLN/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -919,141 +985,45 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CLN/mini_batch/callbacks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="12">
+        <state relative-caret-position="205">
           <caret line="54" column="8" lean-forward="false" selection-start-line="54" selection-start-column="8" selection-end-line="54" selection-end-column="8" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tools.py">
+    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="164">
-          <caret line="15" column="45" lean-forward="false" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
+        <state relative-caret-position="72">
+          <caret line="7" column="41" lean-forward="false" selection-start-line="7" selection-start-column="41" selection-end-line="7" selection-end-column="41" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/app_hidden_based_on_new_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="81" column="4" lean-forward="false" selection-start-line="81" selection-start-column="4" selection-end-line="81" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/app_hidden.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="142">
-          <caret line="75" column="30" lean-forward="false" selection-start-line="75" selection-start-column="30" selection-end-line="75" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#12#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/logger.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="92">
-          <caret line="55" column="39" lean-forward="true" selection-start-line="55" selection-start-column="39" selection-end-line="55" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/analyze_sizes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="295">
-          <caret line="42" column="51" lean-forward="true" selection-start-line="42" selection-start-column="51" selection-end-line="42" selection-end-column="51" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.PyCharm2016.3/system/remote_sources/-1606809995/609332869/keras/layers/convolutional.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="328" column="42" lean-forward="true" selection-start-line="328" selection-start-column="42" selection-end-line="328" selection-end-column="42" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/crop_pictures.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="39" column="50" lean-forward="true" selection-start-line="39" selection-start-column="50" selection-end-line="39" selection-end-column="50" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/classes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="107" column="33" lean-forward="true" selection-start-line="107" selection-start-column="33" selection-end-line="107" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/prepare_trax_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="43" column="56" lean-forward="true" selection-start-line="43" selection-start-column="56" selection-end-line="43" selection-end-column="56" />
-          <folding>
-            <marker date="1489328385359" expanded="true" signature="568:825" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/CLN/mini_batch/prepare_data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="241">
-          <caret line="170" column="41" lean-forward="true" selection-start-line="170" selection-start-column="41" selection-end-line="170" selection-end-column="41" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/PrepareTraxOutputData/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="853">
-          <caret line="58" column="7" lean-forward="true" selection-start-line="58" selection-start-column="7" selection-end-line="58" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="15" column="17" lean-forward="true" selection-start-line="15" selection-start-column="17" selection-end-line="15" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/training.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="118" column="29" lean-forward="true" selection-start-line="118" selection-start-column="29" selection-end-line="118" selection-end-column="29" />
+        <state relative-caret-position="401">
+          <caret line="241" column="36" lean-forward="true" selection-start-line="241" selection-start-column="36" selection-end-line="241" selection-end-column="36" />
           <folding>
             <element signature="e#0#20#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/TODO.txt">
+    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/app_hidden.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="335">
-          <caret line="31" column="58" lean-forward="false" selection-start-line="31" selection-start-column="58" selection-end-line="31" selection-end-column="58" />
+        <state relative-caret-position="-1045">
+          <caret line="29" column="60" lean-forward="true" selection-start-line="29" selection-start-column="60" selection-end-line="29" selection-end-column="60" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/create_model.py">
+    <entry file="file://$PROJECT_DIR$/CLN/mini_batch/training.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="371">
-          <caret line="175" column="54" lean-forward="true" selection-start-line="175" selection-start-column="54" selection-end-line="175" selection-end-column="54" />
-          <folding />
+        <state relative-caret-position="414">
+          <caret line="149" column="63" lean-forward="true" selection-start-line="149" selection-start-column="63" selection-end-line="149" selection-end-column="63" />
+          <folding>
+            <element signature="e#0#20#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

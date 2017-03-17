@@ -37,7 +37,7 @@ class HiddenSaving:
     def get_context(self, list_ids):
         """
         :param list_ids: nodes for which we would like to get context. can be from any sample type.
-        :return: contexts: python list. size of list: n_layers. each on is an array contatining the context of all the
+        :return: contexts: python list. size of list: n_layers. each one is an array contatining the context of all the
                     requested ids. the context is reshaped to |ids|*r*max_neighbor*hiddem_dim.
                     then mask is used to figure out which is a true neighbor and which is not.
         """
@@ -65,14 +65,10 @@ class HiddenSaving:
         :param list_ids: ids of samples for which the update should be done.
         :param hidds: the new hidden information. a list of size n_layers.
         """
-        logging.debug("update_hidden - Started.")
-        logging.debug("analyzing info for 7th layer")
-        logging.debug("ids:" + str(list_ids))
-        logging.debug("hidds[0](firsr layer) shape:" + str(hidds[0].shape))
-        logging.debug("the sum of this: " +str(np.sum(hidds[0])))
+        logging.info("update_hidden - Started.")
         for i in range(self.n_layers):
             self.curr_hidds[i][list_ids] = hidds[i]
-        logging.debug("update_hidden - Ended.")
+        logging.info("update_hidden - Ended.")
         stop_and_read(run_mode)
 
 
@@ -115,7 +111,7 @@ def get_hidden_funcs_from_model(model, n_layers):
     return hidd_highway_funcs
 
 
-def get_hiddens(x, contexts, hidd_input_funcs):
+def calc_hidden(x, contexts, hidd_input_funcs):
     """
 
     :param x: features. can be of any sample type.

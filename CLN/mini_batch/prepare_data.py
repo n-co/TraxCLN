@@ -2,6 +2,8 @@ from config import *
 import gzip
 import cPickle
 import numpy
+from keras.optimizers import *
+from keras.objectives import *
 
 
 def process_input_args(argv):
@@ -25,7 +27,8 @@ def process_input_args(argv):
         '-nmean': 1,  # regulzation factor. shoule be 1<=nmean<=number_of_relations
         '-reg': '',  # indicator: dr: dropout. nothing: no dropout.
         '-opt': 'RMS',  # or Adam. an optimizer for paramater tuning.
-        '-seed': 1234  # used to make random decisions repeat.
+        '-seed': 1234,  # used to make random decisions repeat.
+        '-trainlimit': -1  # a limitation on the size of train set.
     }
     # Update args to contain the user's desired configuration.
     while i < len(argv) - 1:
@@ -38,8 +41,94 @@ def process_input_args(argv):
     arg_dict['-nmean'] = int(arg_dict['-nmean'])
     arg_dict['-seed'] = int(arg_dict['-seed'])
     arg_dict['-y'] = int(arg_dict['-y'])
+    arg_dict['-trainlimit'] = int(arg_dict['-trainlimit'])
     logging.info("process_input_args: Ended.")
     return arg_dict
+
+
+def get_global_configuration(argv):
+    """
+
+    :param argv: the command line args that were passed.
+    :return: dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes,
+        loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids,
+        paths, train_sample_size
+    """
+    logging.info("get_global_configuration - Started.")
+    args = process_input_args(argv)
+    seed = args['-seed']
+    numpy.random.seed(seed)
+    dataset = args['-data']
+    task = 'software'
+    if 'pubmed' in dataset:
+        task = 'pubmed'
+    elif 'movie' in dataset:
+        task = 'movie'
+    elif 'trax' in dataset:
+        task = 'trax'
+    dataset = data_sets_dir + dataset + '.pkl.gz'
+    model_type = args['-model']
+    n_layers = args['-nlayers']
+    dim = args['-dim']
+    shared = args['-shared']
+    saving = args['-saving']
+    nmean = args['-nmean']
+    yidx = args['-y']
+    batch_size = int(args['-batch'])
+    train_limit = args['-trainlimit']
+
+    if 'dr' in args['-reg']:
+        dropout = True
+    else:
+        dropout = False
+
+    if task == 'trax':
+        labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths = load_data_trax(dataset)
+    else:
+        feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
+        paths = feats
+
+    example_x = extract_featurs(paths, [0], task)
+
+    if train_limit == -1:
+        train_sample_size = len(train_ids)
+    else:
+        train_sample_size = train_limit
+
+    labels = labels.astype('int64')
+    if task == 'movie':
+        labels = labels[:, yidx]
+
+    # the number of classes is max+1 since the first class is 0.
+    # in binary classification, this parameter is probably not used.
+    n_classes = numpy.max(labels)
+    if n_classes > 1:
+        n_classes += 1
+        loss = sparse_categorical_crossentropy
+    else:
+        loss = binary_crossentropy
+
+    # define the optimizer for weights finding.
+    all_optimizers = {
+        'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
+        'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+        }
+    # opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+    # opt = Adagrad(learning_rate=0.01, epsilon=1e-8)
+    # opt = Adadelta(learning_rate=1.0, rho=0.95, epsilon=1e-8)
+    # opt = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+    # opt = Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-8
+    selected_optimizer = all_optimizers[args['-opt']]
+
+    n_batchs = train_sample_size // batch_size
+    if train_sample_size % batch_size > 0:
+        n_batchs += 1
+
+    logging.info("get_global_configuration - Ended.")
+    stop_and_read(run_mode)
+    return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
+        loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
+        paths, train_sample_size, n_batchs
 
 
 def create_mask(rel_list):
@@ -133,27 +222,6 @@ class MiniBatchIds:
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
 
 
-# def extract_featurs(feats_paths, ids, task):
-#     """
-#     :param feats_paths: paths to all products.
-#     :param ids: requested ids.
-#     :param: task: the task this NN is performing
-#     :return: a tensor containing the feautures in desired format.
-#     """
-#     logging.debug("loading images from disk - started.")
-#     logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths),len(ids), task))
-#     size_of_db = len(feats_paths)
-#     feats = np.zeros((size_of_db, product_height, product_width, product_channels), dtype=type(np.ndarray))
-#     ans = None
-#     if task == 'trax':
-#         for iden in ids:
-#             feats[iden] = ocv.imread(feats_paths[iden])
-#         ans = feats[ids]
-#     else:
-#         ans = feats_paths[ids]
-#     logging.debug("loading images from disk - ended.")
-#     return ans
-
 def extract_featurs(feats_paths, ids, task):
     """
     :param feats_paths: paths to all products.
@@ -161,20 +229,19 @@ def extract_featurs(feats_paths, ids, task):
     :param task: the task this NN is performing
     :return: a tensor containing the feautures in desired format.
     """
-    logging.debug("loading images from disk - started.")
-    logging.debug("db size is %d batch size is %d task is %s" % (len(feats_paths), len(ids), task))
+    logging.info("extract_featurs: Started.")
+    logging.info("there are %d examples. batch size is %d. task is %s" % (len(feats_paths), len(ids), task))
     feats = np.zeros((len(ids), product_width, product_height, product_channels), dtype=type(np.ndarray))
-    ans = None
     if task == 'trax':
         for ii in range(len(ids)):
             # logging.error(str(ii))
             # logging.error(str(ids[ii]))
             # logging.error(str(feats_paths[ids[ii]]))
-            feats[ii] = ocv.imread(feats_paths[ids[ii]])  #TODO: remove flatten
+            feats[ii] = ocv.imread(feats_paths[ids[ii]])
             # logging.error(str(feats[ii]))
             # stop_and_read('debug')
         ans = feats
     else:
         ans = feats_paths[ids]
-    logging.debug("loading images from disk - ended.")
+        logging.info("extract_featurs: Ended.")
     return ans
