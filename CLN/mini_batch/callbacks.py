@@ -56,6 +56,8 @@ class SaveResult(Callback):
         """
         saves values on local instance. this will be used in the future.
         invoked on epoch end: last mini batch of an epoch. test_x is never none.
+        note that save_result only becomes true when this method is invoked. it is invoked in the last mini batch.
+        this is when save_result becomes true, and then imedietlry it will be false again.
         :param valid_x_d_c: features of validation sample, with relations. valid_x_d_c[0] is the features.
         :param valid_y: labels of validation sample/
         :param test_x_d_c: features of test sample. with relations. test_x_d_c[0] is the features.
@@ -125,7 +127,10 @@ class SaveResult(Callback):
         :operations: updates log files with results of current parameters on epoch, and updates best result paramters
                     for furure usage in case of neeed.
         """
+        st = time.time()
         if not self.save_result:
+            et = time.time()
+            logging.warn("on_epoch_end, SaveResultCallback:  time: %f. " % (et-st))
             return
         self.n_epoch += 1
         self.save_result = False
@@ -166,6 +171,8 @@ class SaveResult(Callback):
                 print ('New learning rate: %.4f', K.get_value(self.model.optimizer.lr))
                 if self.minPatience > self.maxPatience:
                     self.model.stop_training = True
+        et = time.time()
+        logging.warn("on_epoch_end, SaveResultCallback:  time: %f. " % (et - st))
 
 
 # class LRScheduler(Callback):

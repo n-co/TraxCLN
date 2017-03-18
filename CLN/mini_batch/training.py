@@ -29,8 +29,11 @@ def build_model(model_type, n_layers, dim, example_x, rel_list, n_classes, share
                             dropout=dropout)
 
     model.summary()
-    model.compile(optimizer=selected_optimizer, loss=loss)
-
+    # TODO: choose how to compile.
+    # model.compile(optimizer=selected_optimizer, loss=loss)
+    model.compile(loss='sparse_categorical_crossentropy',
+                  optimizer='rmsprop',
+                  metrics=['accuracy'])
     logging.info("build_model: - Ended")
     stop_and_read(run_mode)
     return model
@@ -105,6 +108,7 @@ def main_cln():
     model = build_model(model_type, n_layers, dim, example_x, rel_list, n_classes, shared, nmean,
                         dropout, selected_optimizer, loss)
 
+
     # write information about model into log files.
     f_result, f_params = log_model(model, saving)
 
@@ -118,7 +122,7 @@ def main_cln():
     for epoch in xrange(number_of_epochs):  # train the network a few times to get more accurate results.
         start = time.time()
         for i in xrange(n_batchs):  # go over all batches. all of training data will be used.
-            logging.info("started batch %d in epoch %d." % (i, epoch))
+            batch_start = time.time()
 
             # Extract features and labels of TRAIN set.
             mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
@@ -159,9 +163,11 @@ def main_cln():
                       nb_epoch=1, batch_size=train_x.shape[0], shuffle=False, callbacks=callbacks)
 
             # update hidden data for train set.
+
             new_train_hiddens = calc_hidden(train_x, train_context, hidd_input_funcs)
             hidden_data.update_hidden(mini_batch_ids, new_train_hiddens)
-
+            batch_end = time.time()
+            logging.info("batch %d in epoch %d. is done. time: %f." % (i, epoch, batch_end - batch_start))
         end = time.time()
         logging.info('epoch %d, runtime: %.1f' % (epoch, end - start))
         if model.stop_training:

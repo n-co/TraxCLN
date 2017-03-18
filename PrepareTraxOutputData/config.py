@@ -35,6 +35,9 @@ product_hw = (product_height, product_width)
 product_size = product_hw[0]*product_hw[1] * product_channels
 
 csv_length = -1
+csv_length_limit = 50600 #290000
+first_valid_index = 50000 #289400
+first_test_index = 50300 #289700
 
 # gap_ratio_x = 0.5
 # gap_ratio_y = 0.5
@@ -55,6 +58,21 @@ def dist(pr1, pr2):
     y2 = pr2.mask["y2"]
     return abs(y1 - y2)
 
+def get_sample_type(index):
+    if index >= 0 and index <= first_valid_index - 1:
+        sample_type = 'train'
+    elif index >= first_valid_index and index <= first_test_index - 1:
+        sample_type = 'valid'
+    else:
+        sample_type = 'test'
+    return sample_type
+
+
+def should_i_stop(index):
+    if csv_length_limit == -1:
+        return False
+    else:
+        return index > csv_length_limit
 
 # enums
 rel_left = 0

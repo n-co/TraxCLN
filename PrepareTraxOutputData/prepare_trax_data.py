@@ -17,6 +17,7 @@ def compress_to_gzip_file(labels, rel_list, train_ids, valid_ids, test_ids, path
     out_file.close()
     logging.info('compress_to_gzip_file - Ended.')
 
+
 def load_gzip_file(path):
     logging.info('load_gzip_file - Started')
     f = gzip.open(path, 'rb')
@@ -27,6 +28,7 @@ def load_gzip_file(path):
 
 def format_ids_feats_labels_rel_list(probes):
     logging.info('format_ids_feats_labels_rel_list - Started.')
+    logging.debug('format_ids_feats_labels_rel_list: csv_length is: %d.' % csv_length)
     ids = np.zeros(csv_length, dtype=int)
     labels = np.zeros(csv_length, dtype=int)
     # feats = np.zeros((csv_length, product_height, product_width, product_channels), dtype=type(np.ndarray))
@@ -94,7 +96,7 @@ def show_product_image(window_name, probes, probe_id, product_index):
 
 def import_data():
     logging.info("import_data - Started.")
-    global csv_length  # deccd cdcdlare that the variable is global so it can be modified.
+    global csv_length  # declare that the variable is global so it can be modified.
     probes = {}
     sample_types = {
         "train": np.array([], dtype=int),
@@ -113,14 +115,22 @@ def import_data():
         lines = itertools.islice(f, 1, None)
         reader = csv.reader(lines)
         csv_length = 0
+        i=0
         for row in reader:
             csv_length += 1
-            product = Product(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], probes[row[9]])
+            # sample_type = row[2]
+            sample_type = get_sample_type(i)
+            product = Product(row[0], row[1], sample_type, row[3], row[4], row[5], row[6], row[7], row[8], row[9],
+                              row[10], row[11], probes[row[9]])
             product.index_in_probe = len(probes[product.probe_id].products)
             probes[product.probe_id].products = np.append(probes[product.probe_id].products, product)
             sample_types[product.sample_type] = np.append(sample_types[product.sample_type], product.id)
+
+            if should_i_stop(i):
+                break
+            i += 1
     logging.info("import_data - Ended.")
-    return probes,sample_types["train"],sample_types["valid"],sample_types['test']
+    return probes, sample_types["train"], sample_types["valid"], sample_types['test']
 
 
 def prepare_trax_data():
@@ -133,10 +143,7 @@ def prepare_trax_data():
     # for id in probes:
     #     logging.debug("%s: %d", id, len(probes[id].shelves))
     #     logging.debug(str(map(lambda sh: map(lambda pr: pr.id, sh), probes[id].shelves)))
-    logging.debug(str(ids))
-    logging.debug(str(labels))
-    logging.debug(str(rel_list))
-    logging.debug(str(paths))
+    logging.debug("length of train: %d valid: %d test: %d " % (len(train_ids),len(valid_ids),len(test_ids)))
     logging.info("prepare_trax_data- Ended.")
 
 prepare_trax_data()

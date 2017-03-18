@@ -172,13 +172,21 @@ def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, sh
     cnn_nodes = Convolution2D(32, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
     cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
+    cnn_nodes = Convolution2D(64, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(64, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
+
+    cnn_nodes = Convolution2D(128, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Convolution2D(128, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
+    cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
+
     cnn_nodes = Flatten()(cnn_nodes)
     cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
-    # net = Dense(1024, activation='relu', W_constraint=maxnorm(3),name="dnscnn1")(net)
-    # net = Dropout(dropout_ration_cnn)(net)
-    # net = Dense(512, activation='relu', W_constraint=maxnorm(3),name="dnscnn2")(net)
-    # net = Dropout(dropout_ration_cnn)(net)
-    cnn_nodes = Dense(hidden_dim, activation=cnn_act, name="dnscnn3")(cnn_nodes)
+    cnn_nodes = Dense(1024, activation='relu', W_constraint=maxnorm(3), name="dnscnn1")(cnn_nodes)
+    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    cnn_nodes = Dense(hidden_dim, activation=cnn_act, name="dnscnn2")(cnn_nodes)
 
     shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
                                   init=init, activation=act, transform_bias=trans_bias)

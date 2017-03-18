@@ -18,3 +18,22 @@ def learn_about(context, run_mode):
     # logging.debug("the contents of this array are: " + str(subject))
     stop_and_read(run_mode)
     return ans
+
+
+def expected_run_time(epochs, batch_size, sample_size, batch_rate):
+    ans = sample_size / batch_size
+    ans *= batch_rate
+    ans *= epochs
+    ans = ans / 60.0 / 60.0 / 24.0
+    return ans
+
+
+def required_batch_rate(epochs, batch_size, sample_size, run_time):
+    ans = run_time * batch_size
+    ans = ans / epochs
+    ans = ans * 60.0 * 60.0 * 24.0
+    ans = ans / sample_size
+    return ans
+
+
+print expected_run_time(10,256,60000,25)

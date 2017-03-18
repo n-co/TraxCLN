@@ -65,11 +65,14 @@ class HiddenSaving:
         :param list_ids: ids of samples for which the update should be done.
         :param hidds: the new hidden information. a list of size n_layers.
         """
-        logging.info("update_hidden - Started.")
+        logging.info("update_hidden: Started.")
+        st = time.time()
         for i in range(self.n_layers):
             self.curr_hidds[i][list_ids] = hidds[i]
-        logging.info("update_hidden - Ended.")
+        et = time.time()
+        logging.info("update_hidden: Ended.  time: %f. " % (et - st))
         stop_and_read(run_mode)
+
 
 
 def get_hidden_funcs_from_model(model, n_layers):
@@ -120,6 +123,9 @@ def calc_hidden(x, contexts, hidd_input_funcs):
     :return: hidds: each function is activated on the same features, and relevant
             context. results are saved and and returned in this list.
     """
+    # TODO: this function takes way too long! about 20 secs in a batch size of 256
+    logging.info("calc_hidden: Started.")
+    st = time.time()
     hidds = []
     for i in range(len(hidd_input_funcs)):
         inps = [x] + contexts[:i]
@@ -127,4 +133,6 @@ def calc_hidden(x, contexts, hidd_input_funcs):
         hidds.append(res)
         logging.debug(str(res))
         stop_and_read(run_mode)
+    et = time.time()
+    logging.info("calc_hidden: Ended.  time: %f. " % (et - st))
     return hidds

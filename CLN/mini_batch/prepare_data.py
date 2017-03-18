@@ -243,5 +243,5 @@ def extract_featurs(feats_paths, ids, task):
         ans = feats
     else:
         ans = feats_paths[ids]
-        logging.info("extract_featurs: Ended.")
+    logging.info("extract_featurs: Ended.")
     return ans
