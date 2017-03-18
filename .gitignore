@@ -4,3 +4,4 @@
 TraxInputData*
 TraxOutputData*
 *.pyc
+.idea*
