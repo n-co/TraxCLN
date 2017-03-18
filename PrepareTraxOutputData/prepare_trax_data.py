@@ -120,6 +120,7 @@ def import_data():
             csv_length += 1
             # sample_type = row[2]
             sample_type = get_sample_type(i)
+            #TODO: remove sample type col fromsource csv file
             product = Product(row[0], row[1], sample_type, row[3], row[4], row[5], row[6], row[7], row[8], row[9],
                               row[10], row[11], probes[row[9]])
             product.index_in_probe = len(probes[product.probe_id].products)

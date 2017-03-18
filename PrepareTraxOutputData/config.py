@@ -36,7 +36,7 @@ product_size = product_hw[0]*product_hw[1] * product_channels
 
 csv_length = -1
 csv_length_limit = 50600 #290000
-first_valid_index = 50000 #289400
+first_valid_index = 50000 #289400 #TODO: makse sure these values start at the begining of a probe.
 first_test_index = 50300 #289700
 
 # gap_ratio_x = 0.5

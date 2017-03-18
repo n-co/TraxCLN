@@ -30,3 +30,6 @@ Chat with Aviv:
 
     change validation and test to be larger samples. using minibatches.c
     fix sizes of convoloutional filters, since they don't fit in memory.
+
+
+    HEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYy
