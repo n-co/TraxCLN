@@ -158,6 +158,7 @@ def multi_sparse_graph_loss(y_true, y_pred):
 
     return tensor.mean(objectives.sparse_categorical_crossentropy(y_true, y_pred))
 
+
 def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
@@ -194,6 +195,7 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
     model = Model(input=[inp_nodes, inp_rel, inp_rel_mask], output=[top_nodes])
 
     return model
+
 
 def create_resNet(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean, dropout=True):
     act = 'relu'
