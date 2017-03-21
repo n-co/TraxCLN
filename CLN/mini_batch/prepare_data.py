@@ -83,10 +83,11 @@ def get_global_configuration(argv):
         dropout = False
 
     if task == 'trax':
-        labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths = load_data_trax(dataset)
+        labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data_trax(dataset)
     else:
         feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
         paths = feats
+        batches = None
 
     example_x = extract_featurs(paths, [0], task)
 
@@ -128,7 +129,7 @@ def get_global_configuration(argv):
     stop_and_read(run_mode)
     return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
         loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, train_sample_size, n_batchs
+        paths, batches, train_sample_size, n_batchs
 
 
 def create_mask(rel_list):
@@ -173,12 +174,12 @@ def load_data_trax(path):
     """
     logging.info("load_data - Started.")
     f = gzip.open(path, 'rb')
-    labels, rel_list, train_ids, valid_ids, test_ids, paths = cPickle.load(f)
+    labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
     logging.debug(str(paths))
 
     rel_list, rel_mask = create_mask(rel_list)
     logging.info("load_data - Ended.")
-    return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths
+    return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches
 
 
 def load_data(path):
@@ -217,9 +218,43 @@ class MiniBatchIds:
         :operations: when batch_id is 0, the ids array is suffled. this happens at the begining of every epoch, so every
                      epoch covers all train ids, but in a different order.
         """
-        if batch_id == 0:
-            numpy.random.shuffle(self.ids)
+        #TODO: implement this in other version.
+        # if batch_id == 0:
+        #     numpy.random.shuffle(self.ids)
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
+
+
+class MiniBatchIdsByProbeId:
+    #TODO: add suffel whenever a new epoch starts.
+    def __init__(self, probe_serials, n_samples, number_of_probes,probes_per_batch):
+        self.probe_serials = probe_serials
+        self.number_of_probes = number_of_probes
+        self.probes_per_batch = probes_per_batch
+        self.probe_serials_generator = MiniBatchIds(number_of_probes, probes_per_batch)
+        self.ids = numpy.arange(n_samples)
+        logging.debug("%s %s %s " %( str(n_samples), str(number_of_probes), str(probes_per_batch)))
+
+    def get_paths_by_probe_id(self, probe_serial):
+        path_indexes = []
+        for i in range(len(self.probe_serials)):
+            if self.probe_serials[i] == probe_serial:
+                path_indexes.append(i)
+        path_indexes_np = np.array(path_indexes, dtype=np.uint64)
+        return path_indexes_np
+
+    def get_mini_batch_ids(self, batch_index):
+        probe_serials = self.probe_serials_generator.get_mini_batch_ids(batch_index)
+        logging.debug("probe serials returned are: %s" % str(probe_serials))
+        stop_and_read(run_mode)
+        product_indexes = np.array([], dtype=np.uint64)
+        for probe_serial in probe_serials:
+            curr = self.get_paths_by_probe_id(probe_serial)
+            logging.debug("probe_serial: %s. path_indexes: %s" % (probe_serial,curr))
+            stop_and_read(run_mode)
+            product_indexes = np.append(product_indexes, curr)
+        ans = self.ids[product_indexes]
+        logging.debug("ans: %s" % str(ans))
+        return ans
 
 
 def extract_featurs(feats_paths, ids, task):
@@ -237,7 +272,8 @@ def extract_featurs(feats_paths, ids, task):
             # logging.error(str(ii))
             # logging.error(str(ids[ii]))
             # logging.error(str(feats_paths[ids[ii]]))
-            feats[ii] = ocv.imread(feats_paths[ids[ii]])
+            res = ocv.imread(feats_paths[ids[ii]])
+            feats[ii] = res
             # logging.error(str(feats[ii]))
             # stop_and_read('debug')
         ans = feats

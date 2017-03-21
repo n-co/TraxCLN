@@ -27,6 +27,10 @@ def build_model(model_type, n_layers, dim, example_x, rel_list, n_classes, share
         model = create_hcnn(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape, n_rel=rel_list.shape[-2],
                             n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
                             dropout=dropout)
+    elif model_type == 'Flat':
+        model = create_flat(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape, n_rel=rel_list.shape[-2],
+                            n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
+                            dropout=dropout)
 
     model.summary()
     # TODO: choose how to compile.
@@ -73,14 +77,15 @@ def log_model(model, saving):
     return f_result, f_params
 
 
-def get_information(paths, n_layers, dim, rel_list, rel_mask, train_sample_size, batch_size, labels, valid_ids,
+def get_information(paths, batches, n_layers, dim, rel_list, rel_mask, train_sample_size, batch_size, labels, valid_ids,
                     test_ids, task, f_result, f_params, model):
     logging.info("get_information: - Started.")
     # create a variable to hold hidden features passed through net so relations can be entered as inputs.
     hidden_data = HiddenSaving(n_samples=paths.shape[0], n_layers=n_layers, h_dim=dim, rel=rel_list, rel_mask=rel_mask)
     # create a variable containing a generator, that upon request generates a list of, possibly random, ids to select
     # from TRAIN SET.
-    mini_batch_ids_generator = MiniBatchIds(train_sample_size, batch_size=batch_size)
+    # mini_batch_ids_generator = MiniBatchIds(train_sample_size, batch_size=batch_size) #TODO: convert to generate by probe id
+    mini_batch_ids_generator = MiniBatchIdsByProbeId(batches, train_sample_size, np.max(batches)+1, batch_size)
     # Exctract features and labels of validation and sample tests.
     valid_x = extract_featurs(paths, valid_ids, task)
     valid_y = labels[valid_ids]
@@ -92,7 +97,7 @@ def get_information(paths, n_layers, dim, rel_list, rel_mask, train_sample_size,
     callbacks = [performence_evaluator, NanStopping()]
     # get a simulations of functions in NN so to evaluate features of context.
     hidd_input_funcs = get_hidden_funcs_from_model(model, n_layers)
-    logging.info("get_information: - Started.")
+    logging.info("get_information: - Ended.")
     stop_and_read(run_mode)
     return hidden_data, mini_batch_ids_generator, valid_x, valid_y, test_x, test_y, performence_evaluator, \
         callbacks, hidd_input_funcs
@@ -102,8 +107,8 @@ def main_cln():
     # calculates variables for execution.
     dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, loss, \
         selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, train_sample_size, n_batchs = get_global_configuration(sys.argv)
-
+        paths, batches, train_sample_size, n_batchs = get_global_configuration(sys.argv)
+    logging.debug(str(batches))
     # build a keras model to be trained.
     model = build_model(model_type, n_layers, dim, example_x, rel_list, n_classes, shared, nmean,
                         dropout, selected_optimizer, loss)
@@ -114,7 +119,7 @@ def main_cln():
 
     # get generators and additional variables.
     hidden_data, mini_batch_ids_generator, valid_x, valid_y, test_x, test_y, performence_evaluator, callbacks, \
-        hidd_input_funcs = get_information(paths, n_layers, dim, rel_list, rel_mask, train_sample_size, batch_size,
+        hidd_input_funcs = get_information(paths, batches, n_layers, dim, rel_list, rel_mask, train_sample_size, batch_size,
                                            labels, valid_ids, test_ids, task, f_result, f_params, model)
 
     logging.info("CLN - Started.")
@@ -125,6 +130,8 @@ def main_cln():
             batch_start = time.time()
 
             # Extract features and labels of TRAIN set.
+            logging.debug("batch number req is: %d" % i)
+            stop_and_read(run_mode)
             mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
             train_x = extract_featurs(paths, mini_batch_ids, task)
             train_y = labels[mini_batch_ids]

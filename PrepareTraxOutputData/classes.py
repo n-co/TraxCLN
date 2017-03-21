@@ -22,7 +22,8 @@ class StringToIntConvertor:
             self.counter += 1
         return ans
 
-sti_convertor = StringToIntConvertor()
+product_label_hasher = StringToIntConvertor()
+probe_to_batch_hasher = StringToIntConvertor()
 
 
 class Probe:
@@ -71,7 +72,7 @@ class Product:
         self.patch_id = int(patch_id)
         self.patch_url = str(patch_url)
         self.probe_id = str(probe_id)
-        self.product_label = sti_convertor.string_to_int(product_label)
+        self.product_label = product_label_hasher.string_to_int(product_label)
         voting_confidence = voting_confidence.replace('\'', '\"')
         voting_confidence = voting_confidence.replace('u', '')
         self.voting_confidence = json.loads(voting_confidence)  # TODO: convert to json
@@ -81,6 +82,7 @@ class Product:
         # self.features = self.populate_features()
         self.relations = [[], []]
         self.index_in_probe = -1
+        self.batch_id = probe_to_batch_hasher.string_to_int(self.probe_id)
 
     # def build_relations(self):
     #     probe_obj = self.probe_obj

@@ -215,3 +215,54 @@ def create_hcnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, sh
     model = Model(input=[image_input_nodes] + contexts, output=[top_nodes])
     logging.info("create_hcnn - Ended.")
     return model
+
+
+def create_flat(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared,
+                nmean=1, dropout=True, rel_carry=True):
+    logging.info("create_flat - Started.")
+    logging.debug("create_flat parameters: n_layers: %d, hidden_dim: %d, input_shape: %s, n_rel: %d, n_neigh:"
+                  " %d, n_classes = %d",
+                  n_layers, hidden_dim, str(input_shape), n_rel, n_neigh, n_classes)
+    act = 'relu'
+    cnn_act = 'relu'
+    top_act = 'softmax' if n_classes > 1 else 'sigmoid'
+    n_classes = abs(n_classes)
+    init = 'glorot_normal'
+
+    trans_bias = - n_layers * bias_factor
+
+    image_input_nodes = Input(shape=input_shape, dtype='float32', name='inp_nodes')
+    contexts = [Input(shape=(n_rel, hidden_dim), dtype='float32', name='inp_context_%d' % i)
+                for i in range(n_layers)]
+    cnn_nodes = image_input_nodes
+    #TODO: verify the order of args height and width
+
+    cnn_nodes = Flatten()(cnn_nodes)
+
+    shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                                  init=init, activation=act, transform_bias=trans_bias)
+
+    def highway(is_shared):
+        if is_shared == 1:
+            return shared_highway
+        return GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                            init=init, activation=act, transform_bias=trans_bias)
+
+    # x, rel, rel_mask
+    hidd_nodes = Dense(output_dim=hidden_dim, activation=act)(cnn_nodes)
+    if dropout:
+        hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+
+    for i in range(n_layers):
+        hidd_nodes = highway(shared)([hidd_nodes, contexts[i]])
+        if shared == 0 and i % 5 == 2:
+            hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+
+    if dropout:
+        hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
+    top_nodes = Dense(output_dim=n_classes)(hidd_nodes)
+    top_nodes = Activation(activation=top_act)(top_nodes)
+
+    model = Model(input=[image_input_nodes] + contexts, output=[top_nodes])
+    logging.info("create_flat - Ended.")
+    return model

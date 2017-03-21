@@ -15,13 +15,13 @@ import sys
 sys.path.insert(0, '../')
 import logger
 import logging
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 logging.info("Logger is up and running!")
 
 raw_data_dir = "/vildata/rawdata/Trax/proj_nir_noam/TraxInputData"
 csv_path = raw_data_dir + "/data.csv"
 probes_dir = raw_data_dir + "/Probes/"
-framed_probes_dir = raw_data_dir + "FramedProbes/"
+framed_probes_dir = raw_data_dir + "/FramedProbes/"
 products_dir = raw_data_dir + "/Products/"
 pickle_path = raw_data_dir + "/trax.pkl"
 
@@ -35,9 +35,9 @@ product_hw = (product_height, product_width)
 product_size = product_hw[0]*product_hw[1] * product_channels
 
 csv_length = -1
-csv_length_limit = 50600 #290000
-first_valid_index = 50000 #289400 #TODO: makse sure these values start at the begining of a probe.
-first_test_index = 50300 #289700
+csv_length_limit = 50600  # 290000
+first_valid_index = 50000  # 289400  # TODO: make sure these values start at the begining of a probe.
+first_test_index = 50300  # 289700
 
 # gap_ratio_x = 0.5
 # gap_ratio_y = 0.5
