@@ -137,7 +137,7 @@ def main_cln():
             train_y = labels[mini_batch_ids]
             train_rel_list = rel_list[mini_batch_ids]
             train_rel_mask = rel_mask[mini_batch_ids]
-            model.fit([train_x,train_rel_list], numpy.expand_dims(train_y, -1), validation_data=valid_data, verbose=0,
+            model.fit([train_x, train_rel_list], numpy.expand_dims(train_y, -1), validation_data=valid_data, verbose=0,
                       nb_epoch=1, batch_size=train_x.shape[0], shuffle=False, callbacks=callbacks)
 
 

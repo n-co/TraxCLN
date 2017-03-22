@@ -224,37 +224,72 @@ class MiniBatchIds:
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
 
 
+# class MiniBatchIdsByProbeId:
+#     #TODO: add suffel whenever a new epoch starts.
+#     def __init__(self, probe_serials, n_samples, number_of_probes,probes_per_batch):
+#         self.probe_serials = probe_serials
+#         self.number_of_probes = number_of_probes
+#         self.probes_per_batch = probes_per_batch
+#         self.probe_serials_generator = MiniBatchIds(number_of_probes, probes_per_batch)
+#         self.ids = numpy.arange(n_samples)
+#         logging.debug("%s %s %s " %( str(n_samples), str(number_of_probes), str(probes_per_batch)))
+#
+#     def get_paths_by_probe_id(self, probe_serial):
+#         path_indexes = []
+#         for i in range(len(self.probe_serials)):
+#             if self.probe_serials[i] == probe_serial:
+#                 path_indexes.append(i)
+#         path_indexes_np = np.array(path_indexes, dtype=np.uint64)
+#         return path_indexes_np
+#
+#     def get_mini_batch_ids(self, batch_index):
+#         probe_serials = self.probe_serials_generator.get_mini_batch_ids(batch_index)
+#         logging.debug("probe serials returned are: %s" % str(probe_serials))
+#         stop_and_read(run_mode)
+#         product_indexes = np.array([], dtype=np.uint64)
+#         for probe_serial in probe_serials:
+#             curr = self.get_paths_by_probe_id(probe_serial)
+#             logging.debug("probe_serial: %s. path_indexes: %s" % (probe_serial,curr))
+#             stop_and_read(run_mode)
+#             product_indexes = np.append(product_indexes, curr)
+#         ans = self.ids[product_indexes]
+#         logging.debug("ans: %s" % str(ans))
+#         return ans
+
 class MiniBatchIdsByProbeId:
     #TODO: add suffel whenever a new epoch starts.
-    def __init__(self, probe_serials, n_samples, number_of_probes,probes_per_batch):
-        self.probe_serials = probe_serials
-        self.number_of_probes = number_of_probes
+    def __init__(self, probe_serials, n_samples, number_of_probes, probes_per_batch):
+        '''
+
+        :param probe_serials: a list of length 'n_samples'. the nth element in the list is a serial of the probe that
+         contains the nth product (bottle) in the csv file.
+        :param n_samples: number of products
+        :param number_of_probes:
+        :param probes_per_batch:
+        '''
+        logging.debug("MiniBatchIdsByProbeId constructor")
+        # probes_arr = a numpy array of lists. each list contains the ids of the products
+        self.probes_arr = np.empty(number_of_probes, dtype=object)
+        for i in xrange(number_of_probes):
+            self.probes_arr[i] = []
+        for i in xrange(n_samples):
+            self.probes_arr[probe_serials[i]].append(i)
+
         self.probes_per_batch = probes_per_batch
-        self.probe_serials_generator = MiniBatchIds(number_of_probes, probes_per_batch)
-        self.ids = numpy.arange(n_samples)
-        logging.debug("%s %s %s " %( str(n_samples), str(number_of_probes), str(probes_per_batch)))
+        logging.debug("%s %s %s " % (str(n_samples), str(number_of_probes), str(probes_per_batch)))
 
-    def get_paths_by_probe_id(self, probe_serial):
-        path_indexes = []
-        for i in range(len(self.probe_serials)):
-            if self.probe_serials[i] == probe_serial:
-                path_indexes.append(i)
-        path_indexes_np = np.array(path_indexes, dtype=np.uint64)
-        return path_indexes_np
+    def get_mini_batch_ids(self, batch_id):
+        # if batch_id == 0:
+        #     numpy.random.shuffle(self.probes_arr)
+        #     for i in xrange(len(self.probes_arr)):
+        #         numpy.random.shuffle(self.probes_arr[i])
 
-    def get_mini_batch_ids(self, batch_index):
-        probe_serials = self.probe_serials_generator.get_mini_batch_ids(batch_index)
-        logging.debug("probe serials returned are: %s" % str(probe_serials))
-        stop_and_read(run_mode)
-        product_indexes = np.array([], dtype=np.uint64)
-        for probe_serial in probe_serials:
-            curr = self.get_paths_by_probe_id(probe_serial)
-            logging.debug("probe_serial: %s. path_indexes: %s" % (probe_serial,curr))
-            stop_and_read(run_mode)
-            product_indexes = np.append(product_indexes, curr)
-        ans = self.ids[product_indexes]
-        logging.debug("ans: %s" % str(ans))
-        return ans
+        product_ids = []
+        for product_list in self.probes_arr[self.probes_per_batch * batch_id: self.probes_per_batch * (batch_id + 1)]:
+            product_ids = (product_ids + product_list)
+        product_ids = np.array(product_ids)
+        logging.debug("product_ids: %s" % str(product_ids))
+        return product_ids
 
 
 def extract_featurs(feats_paths, ids, task):
