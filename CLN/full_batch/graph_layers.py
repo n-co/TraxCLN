@@ -1,7 +1,14 @@
+import sys
+sys.path.insert(0, '../../')
+import logger
+from tools import *
+
 from keras.layers import Layer, InputSpec, merge
 from keras import regularizers, initializations, activations, constraints
 from keras import backend as K
 import numpy as np
+
+logging.getLogger().setLevel(logging.ERROR)
 
 class GraphHighway(Layer):
     def __init__(self, init='glorot_uniform', transform_bias=-2,
@@ -30,6 +37,7 @@ class GraphHighway(Layer):
         self.input_dim = input_dim
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
+        del kwargs['rel_carry']  # TODO: find out what this parameter is.
         super(GraphHighway, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -93,12 +101,25 @@ class GraphHighway(Layer):
         mask_mul = rel_mask[:, 0]
         mask_div = rel_mask[:, 1]
 
-        n_nodes, n_rel, n_neigh = rel.shape # number of nodes, number of relation types, number of neighbors for each type of relations
-        dim = x.shape[-1]
+        # n_nodes, n_rel, n_neigh = rel.shape  # number of nodes, number of relation types, number of neighbors for each type of relations
+        n_nodes, n_rel, n_neigh = rel.get_shape().as_list()  # number of nodes, number of relation types, number of neighbors for each type of relations
+        if n_nodes==None:
+            n_nodes = -1
+        dim = x.get_shape().as_list()[-1]
 
         # compute the context for each type of relations in each node:
         # context = sum(all neighbors with the same relation to the node)
-        context = x[rel.flatten()].reshape([n_nodes, n_rel, n_neigh, dim])
+        logging.debug(str(x) + str(rel) + str(rel_mask) )
+        print (n_nodes,n_rel,n_neigh,dim)
+        # logging.debug(str(n_nodes) + str(n_rel) + str(n_neigh) +str(dim))
+        # stop_and_read('debug')
+        flattened_relations = K.flatten(rel)
+        logging.debug("after flat: relations are: %s " % str(flattened_relations.get_shape()))
+        context_subset =x[flattened_relations[0],:]
+        logging.debug(str(K.shape(context_subset)))
+        # stop_and_read('debug')
+        # context = K.reshape(context_subset,[n_nodes, n_rel, n_neigh, dim])
+        context = context_subset
         context = context * mask_mul[:, :, :, None]
         context = K.sum(context, axis=-2) / K.sum(mask_div, axis=-1)[:, :, None]
         # -> now, context: n_nodes, n_rel, dim
@@ -176,6 +197,7 @@ class GraphDense(Layer):
         self.output_dim = output_dim
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
+        del kwargs['rel_carry']  # TODO: find out what this parameter is.
         super(GraphDense, self).__init__(**kwargs)
 
     def build(self, input_shape):

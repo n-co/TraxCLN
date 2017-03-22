@@ -32,4 +32,3 @@ Chat with Aviv:
     fix sizes of convoloutional filters, since they don't fit in memory.
 
 
-    HEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYy

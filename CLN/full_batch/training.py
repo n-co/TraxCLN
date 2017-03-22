@@ -1,7 +1,9 @@
 import numpy
 import sys
 import prepare_data
-args = prepare_data.process_input_args(sys.argv)
+from keras.optimizers import *
+from keras.objectives import *
+args = prepare_data.arg_passing(sys.argv)
 seed = args['-seed']
 numpy.random.seed(seed)
 
@@ -15,7 +17,7 @@ if 'pubmed' in dataset:
 elif 'movie' in dataset:
     task = 'movie'
 
-dataset = '../data/' + dataset + '.pkl.gz'
+dataset = '/vildata/rawdata/Trax/proj_nir_noam/TraxInputData/' + dataset + '.pkl.gz'
 modelType = args['-model']
 n_layers, dim = args['-nlayers'], args['-dim']
 shared = args['-shared']
@@ -34,7 +36,8 @@ if task == 'movie':
 def remove(y, not_ids):
     new_y = numpy.copy(y)
     for ids in not_ids:
-        new_y[ids] = -1
+        # new_y[ids] = -1
+        new_y[ids] =new_y[ids] #TODO: why?
     return new_y
 
 if type == 'software':
@@ -45,11 +48,12 @@ else:
     valid_y = remove(labels, [train_ids, test_ids])
 
 n_classes = numpy.max(labels)
+
 if n_classes > 1:
     n_classes += 1
-    loss = multi_sparse_graph_loss
+    loss = sparse_categorical_crossentropy
 else:
-    loss = graph_loss
+    loss = binary_crossentropy
 
 if 'movie' in task:
     n_classes = -labels.shape[-1]
@@ -97,11 +101,11 @@ f.write('Training log:\n')
 f.close()
 
 saveResult = SaveResult([[feats, rel_list, rel_mask], labels, train_ids, valid_ids, test_ids],
-                        task=task, file_result=fResult, file_params=fParams)
+                        task=task, fileResult=fResult, fileParams=fParams)
 
 callbacks=[saveResult, NanStopping()]
 
 his = model.fit([feats, rel_list, rel_mask], train_y,
-                validation_data=([feats, rel_list, rel_mask], valid_y),
+                validation_data=None,
                 nb_epoch=1000, batch_size=feats.shape[0], shuffle=False,
                 callbacks=callbacks)

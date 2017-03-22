@@ -10,7 +10,7 @@ def arg_passing(argv):
     arg_dict = {'-data': 'pubmed',
                 '-nlayers': 10,
                 '-saving': 'pubmed',
-                '-dim': 50,
+                '-dim': 45,
                 '-shared': 1,
                 '-nmean': 1,
                 '-reg': '',
@@ -28,7 +28,6 @@ def arg_passing(argv):
     arg_dict['-dim'] = int(arg_dict['-dim'])
     arg_dict['-shared'] = int(arg_dict['-shared'])
     arg_dict['-nmean'] = int(arg_dict['-nmean'])
-    arg_dict['-stSize'] = int(arg_dict['-stSize'])
     arg_dict['-seed'] = int(arg_dict['-seed'])
     arg_dict['-y'] = int(arg_dict['-y'])
     return arg_dict

@@ -160,6 +160,10 @@ def multi_sparse_graph_loss(y_true, y_pred):
 
 
 def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
+    logging.debug(str(input_dim))
+    logging.debug(str(n_rel))
+    logging.debug(str(n_neigh))
+    logging.debug(str(hidden_dim))
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -177,7 +181,7 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
 
     #x, rel, rel_mask
     inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
-    inp_rel = Input(shape=(n_rel, n_neigh), dtype='int64', name='inp_rel')
+    inp_rel = Input(shape=(n_rel, n_neigh), dtype='int32', name='inp_rel')
     inp_rel_mask = Input(shape=(2, n_rel, n_neigh), dtype='float32', name='inp_rel_mask')
 
     hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
