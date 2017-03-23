@@ -10,7 +10,7 @@ import numpy as np
 
 logging.getLogger().setLevel(logging.ERROR)
 
-class GraphHighway(Layer):
+class GraphHighwayByRel(Layer):
     def __init__(self, init='glorot_uniform', transform_bias=-2,
                  n_rel=5, mean=1,
                  activation='linear', weights=None,
@@ -38,7 +38,7 @@ class GraphHighway(Layer):
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
         del kwargs['rel_carry']  # TODO: find out what this parameter is.
-        super(GraphHighway, self).__init__(**kwargs)
+        super(GraphHighwayByRel, self).__init__(**kwargs)
 
     def build(self, input_shape):
         input_dim = self.input_dim
@@ -166,7 +166,7 @@ class GraphHighway(Layer):
                   'b_constraint': self.b_constraint.get_config() if self.b_constraint else None,
                   'bias': self.bias,
                   'input_dim': self.input_dim}
-        base_config = super(GraphHighway, self).get_config()
+        base_config = super(GraphHighwayByRel, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 class GraphDense(Layer):

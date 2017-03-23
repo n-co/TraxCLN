@@ -6,7 +6,7 @@ import time
 sys.path.insert(0, '../../')
 import logger
 from tools import *
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 run_mode = 'run'
 logging.info("Logger is up and running - mini batch training.")
 

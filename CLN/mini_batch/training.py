@@ -102,12 +102,59 @@ def get_information(paths, batches, n_layers, dim, rel_list, rel_mask, train_sam
     return hidden_data, mini_batch_ids_generator, valid_x, valid_y, test_x, test_y, performence_evaluator, \
         callbacks, hidd_input_funcs
 
+def run_nn_context(paths, labels, train_ids, valid_ids, test_ids,
+                   valid_x, valid_y, test_x, test_y,
+                   model, callbacks,
+                   i,
+                   task,n_batchs,
+                   mini_batch_ids_generator,hidden_data, performence_evaluator, hidd_input_funcs):
+    mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
+    train_x = extract_featurs(paths, mini_batch_ids, task)
+    train_y = labels[mini_batch_ids]
+
+    # get hidden context for train set.
+    train_context = hidden_data.get_context(mini_batch_ids)
+    learn_about(train_context, run_mode)
+
+    # in the last mini-batch of an epoch compute the context for valid and test, save result.
+    # update hidden states of valid and test in past_hiddens.
+    if i == n_batchs - 1:
+        # get hidden context for valid set.
+        valid_context = hidden_data.get_context(valid_ids)
+
+        # get hidden context for test set.
+        test_context = hidden_data.get_context(test_ids)
+
+        # performence evaluator is activated at the end on an epoch. this makes sure it is up to date.
+        # note that form one epoch to the other, the context change, not the features.
+        performence_evaluator.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
+
+        # this loop simply wrapps lists into tuples, and allow adressing each member in the tuple with a name.
+        # this loop actually runs twice in each epoch: once for valid, once for test.
+        # in each iterations, hidden data is updated for those sets.
+        for x, ct, ids in zip([valid_x, test_x], [valid_context, test_context], [valid_ids, test_ids]):
+            new_hiddens = calc_hidden(x, ct, hidd_input_funcs)
+            hidden_data.update_hidden(ids, new_hiddens)
+
+        # define validation data.
+        valid_data = [[valid_x] + valid_context, valid_y]
+    else:
+        valid_data = None
+
+    # train the model
+    model.fit([train_x] + train_context, numpy.expand_dims(train_y, -1), validation_data=valid_data, verbose=0,
+              nb_epoch=1, batch_size=train_x.shape[0], shuffle=False, callbacks=callbacks)
+
+    # update hidden data for train set.
+
+    new_train_hiddens = calc_hidden(train_x, train_context, hidd_input_funcs)
+    hidden_data.update_hidden(mini_batch_ids, new_train_hiddens)
 
 def main_cln():
     # calculates variables for execution.
     dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, loss, \
         selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, batches, train_sample_size, n_batchs = get_global_configuration(sys.argv)
+        paths, batches, train_sample_size, n_batchs, batch_type = get_global_configuration(sys.argv)
     logging.debug(str(batches))
     # build a keras model to be trained.
     model = build_model(model_type, n_layers, dim, example_x, rel_list, n_classes, shared, nmean,
@@ -132,48 +179,23 @@ def main_cln():
             # Extract features and labels of TRAIN set.
             logging.debug("batch number req is: %d" % i)
             stop_and_read(run_mode)
-            mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(i)]
-            train_x = extract_featurs(paths, mini_batch_ids, task)
-            train_y = labels[mini_batch_ids]
-
-
-            # get hidden context for train set.
-            train_context = hidden_data.get_context(mini_batch_ids)
-            learn_about(train_context, run_mode)
-
-            # in the last mini-batch of an epoch compute the context for valid and test, save result.
-            # update hidden states of valid and test in past_hiddens.
-            if i == n_batchs - 1:
-                # get hidden context for valid set.
-                valid_context = hidden_data.get_context(valid_ids)
-
-                # get hidden context for test set.
-                test_context = hidden_data.get_context(test_ids)
-
-                # performence evaluator is activated at the end on an epoch. this makes sure it is up to date.
-                # note that form one epoch to the other, the context change, not the features.
-                performence_evaluator.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
-
-                # this loop simply wrapps lists into tuples, and allow adressing each member in the tuple with a name.
-                # this loop actually runs twice in each epoch: once for valid, once for test.
-                # in each iterations, hidden data is updated for those sets.
-                for x, ct, ids in zip([valid_x, test_x], [valid_context, test_context], [valid_ids, test_ids]):
-                    new_hiddens = calc_hidden(x, ct, hidd_input_funcs)
-                    hidden_data.update_hidden(ids, new_hiddens)
-
-                # define validation data.
-                valid_data = [[valid_x] + valid_context, valid_y]
+            if batch_type == 'context':
+                run_nn_context(paths, labels, train_ids, valid_ids, test_ids,
+                               valid_x, valid_y, test_x, test_y,
+                               model, callbacks,
+                               i,
+                               task, n_batchs,
+                               mini_batch_ids_generator, hidden_data, performence_evaluator, hidd_input_funcs)
             else:
-                valid_data = None
+                logging.warn("please note that the configuration you have selected is not finished yet.")
+                stop_and_read('debug')
+                run_nn_context(paths, labels, train_ids, valid_ids, test_ids,
+                               valid_x, valid_y, test_x, test_y,
+                               model, callbacks,
+                               i,
+                               task, n_batchs,
+                               mini_batch_ids_generator, hidden_data, performence_evaluator, hidd_input_funcs)
 
-            # train the model
-            model.fit([train_x] + train_context, numpy.expand_dims(train_y, -1), validation_data=valid_data, verbose=0,
-                      nb_epoch=1, batch_size=train_x.shape[0], shuffle=False, callbacks=callbacks)
-
-            # update hidden data for train set.
-
-            new_train_hiddens = calc_hidden(train_x, train_context, hidd_input_funcs)
-            hidden_data.update_hidden(mini_batch_ids, new_train_hiddens)
             batch_end = time.time()
             logging.info("batch %d in epoch %d. is done. time: %f." % (i, epoch, batch_end - batch_start))
         end = time.time()

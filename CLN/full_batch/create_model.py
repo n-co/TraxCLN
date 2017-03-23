@@ -171,13 +171,13 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, s
 
     trans_bias = - n_layers * 0.1
 
-    shared_highway = GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
-                                  init=init, activation=act, transform_bias=trans_bias)
+    shared_highway = GraphHighwayByRel(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                                       init=init, activation=act, transform_bias=trans_bias)
 
     def highway(shared):
         if shared == 1: return shared_highway
-        return GraphHighway(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
-                            init=init, activation=act, transform_bias=trans_bias)
+        return GraphHighwayByRel(input_dim=hidden_dim, n_rel=n_rel, mean=nmean, rel_carry=rel_carry,
+                                 init=init, activation=act, transform_bias=trans_bias)
 
     #x, rel, rel_mask
     inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')

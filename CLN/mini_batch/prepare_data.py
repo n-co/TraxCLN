@@ -28,7 +28,8 @@ def process_input_args(argv):
         '-reg': '',  # indicator: dr: dropout. nothing: no dropout.
         '-opt': 'RMS',  # or Adam. an optimizer for paramater tuning.
         '-seed': 1234,  # used to make random decisions repeat.
-        '-trainlimit': -1  # a limitation on the size of train set.
+        '-trainlimit': -1, # a limitation on the size of train set.
+        '-batchtype': 'context' # 'context' / 'rel'. changes architecture: mini or full batch.
     }
     # Update args to contain the user's desired configuration.
     while i < len(argv) - 1:
@@ -52,7 +53,7 @@ def get_global_configuration(argv):
     :param argv: the command line args that were passed.
     :return: dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes,
         loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids,
-        paths, train_sample_size
+        paths, train_sample_size, batch_type
     """
     logging.info("get_global_configuration - Started.")
     args = process_input_args(argv)
@@ -76,6 +77,7 @@ def get_global_configuration(argv):
     yidx = args['-y']
     batch_size = int(args['-batch'])
     train_limit = args['-trainlimit']
+    batch_type = args['-batchtype']
 
     if 'dr' in args['-reg']:
         dropout = True
@@ -129,7 +131,7 @@ def get_global_configuration(argv):
     stop_and_read(run_mode)
     return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
         loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, batches, train_sample_size, n_batchs
+        paths, batches, train_sample_size, n_batchs, batch_type
 
 
 def create_mask(rel_list):
