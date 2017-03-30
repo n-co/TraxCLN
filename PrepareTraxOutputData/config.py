@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, '../')
 import logger
 import logging
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.DEBUG)
 logging.info("Logger is up and running!")
 
 raw_data_dir = "/vildata/rawdata/Trax/proj_nir_noam/TraxInputData"

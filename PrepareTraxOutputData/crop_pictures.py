@@ -87,7 +87,7 @@ def pad_product(img):
     if paint_pixel is not None:
         for h in range(len(img)):
             for w in range(len(img[h])):
-                if not(left_pad < w < left_pad + img_width and top_pad < h < top_pad + img_height):
+                if not(left_pad <= w < left_pad + img_width and top_pad <= h < top_pad + img_height):
                     img[h, w] = paint_pixel()
     return img
 
