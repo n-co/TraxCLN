@@ -34,13 +34,12 @@ product_wh = (product_width, product_height)
 
 product_size = product_wh[0] * product_wh[1] * product_channels
 
+pad_type = 'black'  # 'black' or 'noise'
+
 csv_length = -1
 csv_length_limit = 50600  # 290000
 first_valid_index = 50000  # 289400  # TODO: make sure these values start at the begining of a probe.
 first_test_index = 50300  # 289700
-
-# gap_ratio_x = 0.5
-# gap_ratio_y = 0.5
 
 eps = 200  # max distance between adjacent products
 
@@ -58,10 +57,11 @@ def dist(pr1, pr2):
     y2 = pr2.mask["y2"]
     return abs(y1 - y2)
 
+
 def get_sample_type(index):
-    if index >= 0 and index <= first_valid_index - 1:
+    if 0 <= index <= first_valid_index - 1:
         sample_type = 'train'
-    elif index >= first_valid_index and index <= first_test_index - 1:
+    elif first_valid_index <= index <= first_test_index - 1:
         sample_type = 'valid'
     else:
         sample_type = 'test'
