@@ -26,13 +26,13 @@ products_dir = raw_data_dir + "/Products/"
 pickle_path = raw_data_dir + "/trax.pkl"
 
 
-product_height = 200
-product_width = 600
+product_width = 200
+product_height = 600
 product_channels = 3
 product_shape = (product_height, product_width, product_channels)
-product_hw = (product_height, product_width)
+product_wh = (product_width, product_height)
 
-product_size = product_hw[0]*product_hw[1] * product_channels
+product_size = product_wh[0] * product_wh[1] * product_channels
 
 csv_length = -1
 csv_length_limit = 50600  # 290000

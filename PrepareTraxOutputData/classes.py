@@ -109,7 +109,7 @@ class Product:
         y2 = self.mask["y2"]
         img = self.probe_obj.features
         cropped = img[y1:y2, x1:x2]
-        cropped = ocv.resize(cropped, conf.product_hw)  # resize image
+        cropped = ocv.resize(cropped, conf.product_wh)  # resize image
         return cropped
 
 

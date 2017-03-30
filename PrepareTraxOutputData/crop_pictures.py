@@ -1,14 +1,14 @@
 from config import *
 
 
-def crop_probes(csv_path, probes_dir, products_dir, product_hw):
+def crop_probes(csv_path, probes_dir, products_dir, product_wh):
     """
     according to a trax formatted csv file, makes jpg's of products from original pics.
     assumes csv is sorted by probe_id in order to be more effieicent.
     :param csv_path: path to a csv file.
     :param probes_dir: directory in which source probes are located.
     :param products_dir: directory to place cropped products.
-    :param product_hw: height and width of product, after resize.
+    :param product_wh: height and width of product, after resize.
     :return: nothing.
     """
     logging.info("crop_probes: Started.")
@@ -29,7 +29,7 @@ def crop_probes(csv_path, probes_dir, products_dir, product_hw):
             mask = row[5].replace('\'', '\"')  # fix json string
             mask = json.loads(mask)
             cropped = probe_img[mask["y1"]:mask["y2"], mask["x1"]:mask["x2"]]
-            cropped = ocv.resize(cropped, product_hw)  # resize image
+            cropped = ocv.resize(cropped, product_wh)  # resize image
 
             patch_url = row[8]
             # product = Product(row[0], row[1], row[2], row[3], row[4], row[5],
@@ -41,4 +41,4 @@ def crop_probes(csv_path, probes_dir, products_dir, product_hw):
             i += 1
     logging.info("crop_probes: Ended.")
 
-crop_probes(csv_path, probes_dir, products_dir, product_hw)
+crop_probes(csv_path, probes_dir, products_dir, product_wh)
