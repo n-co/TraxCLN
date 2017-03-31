@@ -18,7 +18,7 @@ def process_input_args(argv):
     arg_dict = {
         '-data': 'pubmed',  # chosing the learning data set: trax, pubmed, movielens, software.
         '-saving': 'pubmed',  # log file name.
-        '-model': '',  # type of NN for each column network. Highway/Dence/CNN?
+        '-model': '',  # type of NN for each column network. Highway/Dence/
         '-batch': 100,  # batch size for mini-batch version.
         '-y': 1,  # incase of multilabel training, decides on which one net is trained.
         '-nlayers': 10,  # number of layers in each highway network.
@@ -28,12 +28,13 @@ def process_input_args(argv):
         '-reg': '',  # indicator: dr: dropout. nothing: no dropout.
         '-opt': 'RMS',  # or Adam. an optimizer for paramater tuning.
         '-seed': 1234,  # used to make random decisions repeat.
-        '-trainlimit': -1, # a limitation on the size of train set.
-        '-batchtype': 'context' # 'context' / 'rel'. changes architecture: mini or full batch.
+        '-trainlimit': -1,  # a limitation on the size of train set.
+        '-batchtype': 'context',  # 'context' / 'relation'. changes architecture: mini or full batch.
+        '-flatmethod': 'c'  # 'c' -CNN. 'f' - Flat. else - No Flat.
     }
     # Update args to contain the user's desired configuration.
     while i < len(argv) - 1:
-        arg_dict[argv[i]] = argv[i+1]
+        arg_dict[argv[i]] = argv[i + 1]
         i += 2
     # Update data types for arguments.
     arg_dict['-nlayers'] = int(arg_dict['-nlayers'])
@@ -78,6 +79,7 @@ def get_global_configuration(argv):
     batch_size = int(args['-batch'])
     train_limit = args['-trainlimit']
     batch_type = args['-batchtype']
+    fm = args['-flatmethod']
 
     if 'dr' in args['-reg']:
         dropout = True
@@ -85,11 +87,11 @@ def get_global_configuration(argv):
         dropout = False
 
     if task == 'trax':
-        labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data_trax(dataset)
+        labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data_trax(dataset,batch_type)
     else:
         feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
         paths = feats
-        batches = None
+        batches = [0]
 
     example_x = extract_featurs(paths, [0], task)
 
@@ -115,7 +117,7 @@ def get_global_configuration(argv):
     all_optimizers = {
         'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
         'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
-        }
+    }
     # opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
     # opt = Adagrad(learning_rate=0.01, epsilon=1e-8)
     # opt = Adadelta(learning_rate=1.0, rho=0.95, epsilon=1e-8)
@@ -123,18 +125,21 @@ def get_global_configuration(argv):
     # opt = Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-8
     selected_optimizer = all_optimizers[args['-opt']]
 
-    n_batchs = train_sample_size // batch_size
+    if batch_type =='context':
+        n_batchs = train_sample_size // batch_size
+    else:
+        n_batchs = np.max(batches) + 1
     if train_sample_size % batch_size > 0:
         n_batchs += 1
 
     logging.info("get_global_configuration - Ended.")
     stop_and_read(run_mode)
     return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
-        loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, batches, train_sample_size, n_batchs, batch_type
+           loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
+           paths, batches, train_sample_size, n_batchs, batch_type, fm
 
 
-def create_mask(rel_list):
+def create_mask_context(rel_list):
     """
     reformats a given relation list to contain list elements all of the same size.
     :param rel_list: a list of size n_nodes = |sample|+|valid|+|test|. each elemt is a list of size n_rels = r.
@@ -157,9 +162,9 @@ def create_mask(rel_list):
     mask = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='float32')
 
     for i, sample in enumerate(rel_list):  # go over all samples, while saving a reference to to
-                                            # the index of a sample and the sample itself.
+        # the index of a sample and the sample itself.
         for j, r in enumerate(sample):  # go over all relations of an example, while saving
-                                        # a reference to the index of the relation and the relation itself.
+            # a reference to the index of the relation and the relation itself.
             n = len(r)
             rel[i, j, : n] = r
             mask[i, j, : n] = 1.0
@@ -167,7 +172,7 @@ def create_mask(rel_list):
     return rel, mask
 
 
-def load_data_trax(path):
+def load_data_trax(path,batchtype):
     """
     loads data from a pcl file into memory.
     :param: path: full path to a gzip file, containing cPickle data.
@@ -179,7 +184,10 @@ def load_data_trax(path):
     labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
     logging.debug(str(paths))
 
-    rel_list, rel_mask = create_mask(rel_list)
+    if batchtype=='relation':
+        rel_list, rel_mask = create_mask_relation(rel_list)
+    elif batchtype=='context':
+        rel_list, rel_mask = create_mask_context(rel_list)
     logging.info("load_data - Ended.")
     return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches
 
@@ -194,7 +202,7 @@ def load_data(path):
     logging.info("load_data - Started.")
     f = gzip.open(path, 'rb')
     feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
-    rel_list, rel_mask = create_mask(rel_list)
+    rel_list, rel_mask = create_mask_context(rel_list)
     logging.info("load_data - Ended.")
     return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
 
@@ -205,6 +213,7 @@ class MiniBatchIds:
     :ivar ids: an array of all integers in the interval [0,n_samples-1] (including edges)
     :ivar: batch_size: the size of a single batch.
     """
+
     def __init__(self, n_samples, batch_size):
         """
         :param n_samples: the number of samples in the entire training set.
@@ -220,7 +229,7 @@ class MiniBatchIds:
         :operations: when batch_id is 0, the ids array is suffled. this happens at the begining of every epoch, so every
                      epoch covers all train ids, but in a different order.
         """
-        #TODO: implement this in other version.
+        # TODO: implement this in other version.
         # if batch_id == 0:
         #     numpy.random.shuffle(self.ids)
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
@@ -259,7 +268,7 @@ class MiniBatchIds:
 #         return ans
 
 class MiniBatchIdsByProbeId:
-    #TODO: add suffel whenever a new epoch starts.
+    # TODO: add suffel whenever a new epoch starts.
     def __init__(self, probe_serials, n_samples, number_of_probes, probes_per_batch):
         '''
 
@@ -318,3 +327,28 @@ def extract_featurs(feats_paths, ids, task):
         ans = feats_paths[ids]
     logging.info("extract_featurs: Ended.")
     return ans
+
+
+def create_mask_relation(rel_list):
+    n_nodes = len(rel_list)
+    n_rels = len(rel_list[0])
+    max_neigh = 0
+
+    for node in rel_list:
+        for rel in node:
+            max_neigh = max(max_neigh, len(rel))
+
+    rel = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='int64')
+    mask = numpy.zeros((n_nodes, 2, n_rels, max_neigh), dtype='float32')
+
+    for i, node in enumerate(rel_list):
+        for j, r in enumerate(node):
+            n = len(r)
+            if n == 0:
+                mask[i, 1, j, 0] = 1
+            else:
+                rel[i, j, : n] = r
+                mask[i, 0, j, : n] = 1.0
+                mask[i, 1, j, : n] = 1.0
+
+    return rel, mask

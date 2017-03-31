@@ -117,7 +117,8 @@ class SaveResult(Callback):
         accuracy = metrics.accuracy_score(y_true, y_pred, normalize=True, sample_weight=None)
         err = metrics.zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None)
         return accuracy, err, auc, f1, pre, rec
-
+    def on_epoch_begin(self, epoch, logs=None):
+        logging.debug("epoch starts")
     def on_epoch_end(self, epoch, logs={}):
         """
 
@@ -130,7 +131,7 @@ class SaveResult(Callback):
         st = time.time()
         if not self.save_result:
             et = time.time()
-            logging.warn("on_epoch_end, SaveResultCallback:  time: %f. " % (et-st))
+            logging.debug("on_epoch_end, SaveResultCallback:  time: %f. " % (et-st))
             return
         self.n_epoch += 1
         self.save_result = False
@@ -172,7 +173,7 @@ class SaveResult(Callback):
                 if self.minPatience > self.maxPatience:
                     self.model.stop_training = True
         et = time.time()
-        logging.warn("on_epoch_end, SaveResultCallback:  time: %f. " % (et - st))
+        logging.debug("on_epoch_end, SaveResultCallback:  time: %f. " % (et - st))
 
 
 # class LRScheduler(Callback):
