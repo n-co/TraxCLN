@@ -105,7 +105,7 @@ saveResult = SaveResult([[feats, rel_list, rel_mask], labels, train_ids, valid_i
 
 callbacks=[saveResult, NanStopping()]
 
-validation_data =  ([feats, rel_list, rel_mask], train_y)
+validation_data =([feats, rel_list, rel_mask], train_y)
 his = model.fit([feats, rel_list, rel_mask], train_y,
                 validation_data=validation_data,
                 nb_epoch=1000, batch_size=feats.shape[0], shuffle=False,
