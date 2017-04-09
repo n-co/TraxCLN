@@ -37,9 +37,9 @@ product_size = product_wh[0] * product_wh[1] * product_channels
 pad_type = 'black'  # 'black' or 'noise'
 
 csv_length = -1
-csv_length_limit = 50600  # 290000
-first_valid_index = 50000  # 289400  # TODO: make sure these values start at the begining of a probe.
-first_test_index = 50300  # 289700
+csv_length_limit = 50615  # 290000
+first_valid_index = 50013  # 289400  # TODO: make sure these values start at the begining of a probe.
+first_test_index = 50322  # 289700
 
 eps = 200  # max distance between adjacent products
 

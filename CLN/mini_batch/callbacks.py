@@ -1,6 +1,6 @@
 from config import *
 import numpy
-#from theano import tensor
+# from theano import tensor
 import tensorflow as tensor
 from keras.callbacks import *
 from keras import objectives
@@ -117,8 +117,10 @@ class SaveResult(Callback):
         accuracy = metrics.accuracy_score(y_true, y_pred, normalize=True, sample_weight=None)
         err = metrics.zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None)
         return accuracy, err, auc, f1, pre, rec
+
     def on_epoch_begin(self, epoch, logs=None):
         logging.debug("epoch starts")
+
     def on_epoch_end(self, epoch, logs={}):
         """
 
@@ -131,7 +133,7 @@ class SaveResult(Callback):
         st = time.time()
         if not self.save_result:
             et = time.time()
-            logging.debug("on_epoch_end, SaveResultCallback:  time: %f. " % (et-st))
+            logging.debug("on_epoch_end, SaveResultCallback:  time: %f. " % (et - st))
             return
         self.n_epoch += 1
         self.save_result = False
@@ -207,6 +209,7 @@ class NanStopping(Callback):
             if numpy.isnan(k):
                 self.model.stop_training = True
 
+
 # def graph_loss(y_true, y_pred):
 #     ids = tensor.nonzero(y_true + 1)[0]
 #     y_true = y_true[ids]
@@ -220,3 +223,87 @@ class NanStopping(Callback):
 #     y_pred = y_pred[ids]
 #
 #     return tensor.mean(objectives.sparse_categorical_crossentropy(y_true, y_pred))
+
+
+class Evaluator(Callback):
+    def __init__(self, test_gen, file_result='', file_params='', min_patience=5, max_patience=20):
+        super(Evaluator, self).__init__()  # call constructor of Callback Class.
+        logging.info("Evaluator: constructor: started.")
+        self.test_gen = test_gen
+        self.log_file_path = file_result
+        self.param_file_path = file_params
+
+        self.bestResult = 0.0
+        self.bestEpoch = 0
+        # wait to divide the learning rate. if reach the maxPatience -> stop learning
+        self.wait = 0
+        self.minPatience = min_patience
+        self.maxPatience = max_patience
+        logging.info("Evaluator: constructor: ended.")
+
+    def set_gen(self, new_gen):
+        self.test_gen = new_gen
+
+    def on_epoch_begin(self, epoch, logs=None):
+        logging.info("Evaluator: on_epoch_begin: started.")
+        logging.info("Evaluator: on_epoch_begin: ended.")
+
+    def on_epoch_end(self, epoch, logs=None):
+        logging.info("Evaluator: on_epoch_ended: started.")
+        test_batch_generator = self.test_gen.gen
+        test_size = self.test_gen.n_samples
+        y_pred = self.model.predict_generator(test_batch_generator, test_size,
+                                              max_q_size=10, nb_worker=1, pickle_safe=False)
+        y_true = self.test_gen.get_ytrue()
+        logging.debug("computing results. the shape of y_true is : %s. the shape of y_pred is: %s" %
+                      (y_true.shape, y_pred.shape))
+        if numpy.max(y_true) == 1:
+            fp, tp, thresholds = metrics.roc_curve(y_true, y_pred)
+            auc = metrics.auc(fp, tp)
+            y_pred = numpy.round(y_pred)
+            average = 'binary'
+        else:
+            y_pred = numpy.argmax(y_pred, axis=1)
+            average = 'micro'
+            auc = metrics.f1_score(y_true, y_pred, average='macro')
+
+        if numpy.isnan(y_pred).any():
+            return 0.0, 0.0, 0.0, 0.0
+
+        # metric can be 'f1_binary', 'f1_micro', 'f1_macro' (for multi-classes)
+        call = {'f1': metrics.f1_score,
+                'recall': metrics.recall_score,
+                'precision': metrics.precision_score}
+
+        pre = call['precision'](y_true, y_pred, average=average)
+        rec = call['recall'](y_true, y_pred, average=average)
+        f1 = call['f1'](y_true, y_pred, average=average)
+        accuracy = metrics.accuracy_score(y_true, y_pred, normalize=True, sample_weight=None)
+        err = metrics.zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None)
+
+        logging.debug("Evaluator: on_epoch_end: done testing. acc. %f. err: %f." % (accuracy, err))
+        f = open(self.log_file_path, 'a')
+        f.write('\t\t%.4f\t%.4f\t%.4f\t%.4f\n' % (auc, f1, pre, rec))
+        f.write('\t\t%.4f\t%.4f\n' % (accuracy, err))
+        f.close()
+
+        if f1 > self.bestResult:
+            logging.debug("Evaluator: on_epoch_end: best result imporoved! saving weights!")
+            self.bestResult = f1
+            # this actually saves weights of net to file. note it is decided based on validation only.
+            # no decistions are made based on test sample.
+            self.model.save_weights(self.param_file_path, overwrite=True)
+            self.wait = 0
+        f.close()
+        if f1 < self.bestResult:
+            logging.debug("Evaluator: on_epoch_end: best result was not achieved this time.")
+            self.wait += 1
+            if self.wait == self.minPatience:
+                self.wait = 0
+                self.minPatience += 5
+                lr = K.get_value(self.model.optimizer.lr) / 2.0
+                K.set_value(self.model.optimizer.lr, lr)
+                print ('New learning rate: %.4f', K.get_value(self.model.optimizer.lr))
+                if self.minPatience > self.maxPatience:
+                    self.model.stop_training = True
+        logging.info("Evaluator: on_epoch_ended: ended.")

@@ -58,6 +58,7 @@ def flat_by_flat(image_input_nodes, hidden_dim):
 def create_highway(n_layers, hidden_dim, input_dim, n_rel,
                    n_neigh, n_classes, shared, nmean=1, dropout=True, rel_carry=True):
     # Creates a keras model that can be used, compiled and fitted.
+    logging.info("create_highway: started.")
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -110,11 +111,12 @@ def create_highway(n_layers, hidden_dim, input_dim, n_rel,
     # in which input is both input nodes (a tensor of the correct form) and the context array, and output is
     # is top nodes - the hidden layers wrapped with a dense + activation layer.
     model = Model(input=[inp_nodes] + contexts, output=[top_nodes])
-
+    logging.info("create_highway: ended.")
     return model
 
 
 def create_dense(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True):
+    logging.info("create_dense: started.")
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -137,47 +139,12 @@ def create_dense(n_layers, hidden_dim, input_dim, n_rel, n_neigh, n_classes, sha
     top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
     top_nodes = Activation(activation=top_act)(top_nodes)
     model = Model(input=[inp_nodes, contexts], output=[top_nodes])
-
+    logging.info("create_dense: ended.")
     return model
-
-
-def create_highway_no_rel(n_layers, hidden_dim, input_dim, n_classes, shared=1, dropout=True):
-    act = 'relu'
-    top_act = 'softmax' if n_classes > 1 else 'sigmoid'
-    n_classes = abs(n_classes)
-    init = 'glorot_normal'
-
-    trans_bias = - n_layers * bias_factor
-
-    shared_highway = Highway(input_dim=hidden_dim, init=init, activation=act, transform_bias=trans_bias)
-
-    def highway(is_shared):
-        if is_shared == 1:
-            return shared_highway
-        return Highway(input_dim=hidden_dim, init=init, activation=act, transform_bias=trans_bias)
-
-    # x, rel, rel_mask
-    inp_nodes = Input(shape=(input_dim,), dtype='float32', name='inp_nodes')
-    hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_dim, activation=act)(inp_nodes)
-    if dropout:
-        hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
-
-    for i in range(n_layers):
-        hidd_nodes = highway(shared)(hidd_nodes)
-
-    if dropout:
-        hidd_nodes = Dropout(dropout_ratio)(hidd_nodes)
-    top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
-    top_nodes = Activation(activation=top_act)(top_nodes)
-
-    model = Model(input=inp_nodes, output=[top_nodes])
-
-    return model
-
 
 def create_hccn_context(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared,
                         nmean=1, dropout=True, rel_carry=True, flat_method='c'):
-    logging.info("create_hcnn - Started.")
+    logging.info("create_hcnn_context - Started.")
     logging.debug("create_hcnn parameters: n_layers: %d, hidden_dim: %d, input_shape: %s, n_rel: %d, n_neigh:"
                   " %d, n_classes = %d",
                   n_layers, hidden_dim, str(input_shape), n_rel, n_neigh, n_classes)
@@ -219,12 +186,38 @@ def create_hccn_context(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_cla
     top_nodes = Activation(activation=top_act)(top_nodes)
 
     model = Model(input=[image_input_nodes] + contexts, output=[top_nodes])
-    logging.info("create_hcnn - Ended.")
+    logging.info("create_hcnn_context - Ended.")
     return model
+
+
+def create_cnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True,
+                       rel_carry=True, flat_method='c'):
+        logging.info("create_cnn: started.")
+        act = 'relu'
+        top_act = 'softmax' if n_classes > 1 else 'sigmoid'
+        n_classes = abs(n_classes)
+        init = 'glorot_normal'
+
+        trans_bias = - n_layers * 0.1
+
+        # x, rel, rel_mask
+        input_image_nodes = Input(shape=input_shape, dtype='float32', name='inp_nodes')
+
+
+        cnn_nodes = flat_by_method(flat_method, input_image_nodes, hidden_dim)
+
+        hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_shape, activation=act)(cnn_nodes)
+        top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
+        top_nodes = Activation(activation=top_act)(top_nodes)
+
+        model = Model(input=[input_image_nodes], output=[top_nodes])
+        logging.info("create_cnn: ended.")
+        return model
 
 
 def creat_cnn_relation(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True,
                        rel_carry=True, flat_method='c'):
+    logging.info("create_hcnn_relation: started.")
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -261,5 +254,5 @@ def creat_cnn_relation(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_clas
     top_nodes = Activation(activation=top_act)(top_nodes)
 
     model = Model(input=[input_image_nodes, inp_rel, inp_rel_mask], output=[top_nodes])
-
+    logging.info("create_hcnn_relation: ended.")
     return model

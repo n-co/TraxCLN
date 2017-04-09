@@ -8,7 +8,7 @@ def stop_and_read(run_mode):
 
 def learn_about(context, run_mode):
     ans = True
-    subject = context[0][11][0]
+    subject = context[0][1][0]
     # logging.debug("recieved context param. this is a python list! it should be of the same "
     #              "size as hidden layers. length: " + str(len(context)))
     # logging.debug("we will analyze the first layer.")

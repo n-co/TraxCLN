@@ -52,9 +52,7 @@ def get_global_configuration(argv):
     """
 
     :param argv: the command line args that were passed.
-    :return: dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes,
-        loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids,
-        paths, train_sample_size, batch_type
+    :return: many variables to be used as globals in main.
     """
     logging.info("get_global_configuration - Started.")
     args = process_input_args(argv)
@@ -91,7 +89,7 @@ def get_global_configuration(argv):
     else:
         feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
         paths = feats
-        batches = [0]
+        batches = feats #TODO: this is dummy wo it will be of correct data type
 
     example_x = extract_featurs(paths, [0], task)
 
@@ -101,8 +99,7 @@ def get_global_configuration(argv):
         train_sample_size = train_limit
 
     labels = labels.astype('int64')
-    if task == 'movie':
-        labels = labels[:, yidx]
+
 
     # the number of classes is max+1 since the first class is 0.
     # in binary classification, this parameter is probably not used.
@@ -118,11 +115,6 @@ def get_global_configuration(argv):
         'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
         'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
     }
-    # opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
-    # opt = Adagrad(learning_rate=0.01, epsilon=1e-8)
-    # opt = Adadelta(learning_rate=1.0, rho=0.95, epsilon=1e-8)
-    # opt = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
-    # opt = Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-8
     selected_optimizer = all_optimizers[args['-opt']]
 
     if batch_type =='context':
@@ -225,61 +217,30 @@ class MiniBatchIds:
     def get_mini_batch_ids(self, batch_id):
         """
         :param: batch_id: the index of the current batch. relevant ids can be calculated from the list by this index.
-        :return: an array of indexes, continious, decribing ids of the burrent batch.
+        :return: an array of indexes, continious, describing ids of the burrent batch.
         :operations: when batch_id is 0, the ids array is suffled. this happens at the begining of every epoch, so every
                      epoch covers all train ids, but in a different order.
         """
         # TODO: implement this in other version.
-        # if batch_id == 0:
-        #     numpy.random.shuffle(self.ids)
+        if batch_id == 0:
+            numpy.random.shuffle(self.ids)
         return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
 
-
-# class MiniBatchIdsByProbeId:
-#     #TODO: add suffel whenever a new epoch starts.
-#     def __init__(self, probe_serials, n_samples, number_of_probes,probes_per_batch):
-#         self.probe_serials = probe_serials
-#         self.number_of_probes = number_of_probes
-#         self.probes_per_batch = probes_per_batch
-#         self.probe_serials_generator = MiniBatchIds(number_of_probes, probes_per_batch)
-#         self.ids = numpy.arange(n_samples)
-#         logging.debug("%s %s %s " %( str(n_samples), str(number_of_probes), str(probes_per_batch)))
-#
-#     def get_paths_by_probe_id(self, probe_serial):
-#         path_indexes = []
-#         for i in range(len(self.probe_serials)):
-#             if self.probe_serials[i] == probe_serial:
-#                 path_indexes.append(i)
-#         path_indexes_np = np.array(path_indexes, dtype=np.uint64)
-#         return path_indexes_np
-#
-#     def get_mini_batch_ids(self, batch_index):
-#         probe_serials = self.probe_serials_generator.get_mini_batch_ids(batch_index)
-#         logging.debug("probe serials returned are: %s" % str(probe_serials))
-#         stop_and_read(run_mode)
-#         product_indexes = np.array([], dtype=np.uint64)
-#         for probe_serial in probe_serials:
-#             curr = self.get_paths_by_probe_id(probe_serial)
-#             logging.debug("probe_serial: %s. path_indexes: %s" % (probe_serial,curr))
-#             stop_and_read(run_mode)
-#             product_indexes = np.append(product_indexes, curr)
-#         ans = self.ids[product_indexes]
-#         logging.debug("ans: %s" % str(ans))
-#         return ans
 
 class MiniBatchIdsByProbeId:
     # TODO: add suffel whenever a new epoch starts.
     def __init__(self, probe_serials, n_samples, number_of_probes, probes_per_batch):
         '''
-
+        designed to handle a single Sample!(train/valid/test).
         :param probe_serials: a list of length 'n_samples'. the nth element in the list is a serial of the probe that
          contains the nth product (bottle) in the csv file.
         :param n_samples: number of products
         :param number_of_probes:
         :param probes_per_batch:
         '''
-        logging.debug("MiniBatchIdsByProbeId constructor")
-        # probes_arr = a numpy array of lists. each list contains the ids of the products
+        logging.info("MiniBatchIdsByProbeId constructor")
+        logging.info("can handle: probes: %d. products: %d. probes in batch: %d." %(n_samples,number_of_probes,probes_per_batch))
+        # probes_arr = a numpy array of lists. each list will contain the ids of the products
         self.probes_arr = np.empty(number_of_probes, dtype=object)
         for i in xrange(number_of_probes):
             self.probes_arr[i] = []
@@ -287,19 +248,25 @@ class MiniBatchIdsByProbeId:
             self.probes_arr[probe_serials[i]].append(i)
 
         self.probes_per_batch = probes_per_batch
-        logging.debug("%s %s %s " % (str(n_samples), str(number_of_probes), str(probes_per_batch)))
 
     def get_mini_batch_ids(self, batch_id):
+        """
+        returns ids for batch_ids. this is serial, and until data is fixed for evry id unless shuffled.
+        :param batch_id: the request batch_id.
+        :return: the ids for this batch.
+        """
         # if batch_id == 0:
         #     numpy.random.shuffle(self.probes_arr)
         #     for i in xrange(len(self.probes_arr)):
         #         numpy.random.shuffle(self.probes_arr[i])
 
+        logging.info("MiniBatchIdsByProbeId: get_mini_batch_ids: started.")
         product_ids = []
         for product_list in self.probes_arr[self.probes_per_batch * batch_id: self.probes_per_batch * (batch_id + 1)]:
             product_ids = (product_ids + product_list)
         product_ids = np.array(product_ids)
-        logging.debug("product_ids: %s" % str(product_ids))
+        # logging.debug("MiniBatchIdsByProbeId: get_mini_batch_ids: product_ids: %s" % str(product_ids))
+        logging.info("MiniBatchIdsByProbeId: get_mini_batch_ids: Ended.")
         return product_ids
 
 
@@ -315,13 +282,8 @@ def extract_featurs(feats_paths, ids, task):
     feats = np.zeros((len(ids), product_width, product_height, product_channels), dtype=type(np.ndarray))
     if task == 'trax':
         for ii in range(len(ids)):
-            # logging.error(str(ii))
-            # logging.error(str(ids[ii]))
-            # logging.error(str(feats_paths[ids[ii]]))
             res = ocv.imread(feats_paths[ids[ii]])
             feats[ii] = res
-            # logging.error(str(feats[ii]))
-            # stop_and_read('debug')
         ans = feats
     else:
         ans = feats_paths[ids]
@@ -330,25 +292,34 @@ def extract_featurs(feats_paths, ids, task):
 
 
 def create_mask_relation(rel_list):
+    """
+
+    :param rel_list: a relation list. size: n_nodes = |train|+|valid|+|test|. every node contains n_rels relations.
+    :return:
+    """
+    logging.info("create_mask_relation: Started.")
     n_nodes = len(rel_list)
     n_rels = len(rel_list[0])
     max_neigh = 0
 
+    #go over all nodes, and all of their relation and find the largest relation.
     for node in rel_list:
         for rel in node:
             max_neigh = max(max_neigh, len(rel))
 
+    #create arrays abel to handle the same amount of data, but for every relation it will hold the maximal amount
+    # needed.
     rel = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='int64')
     mask = numpy.zeros((n_nodes, 2, n_rels, max_neigh), dtype='float32')
 
-    for i, node in enumerate(rel_list):
-        for j, r in enumerate(node):
+    for i, node in enumerate(rel_list): #go over source relation list.
+        for j, r in enumerate(node): # go over source relation.
             n = len(r)
-            if n == 0:
+            if n == 0:  # if the relation is empty
                 mask[i, 1, j, 0] = 1
             else:
-                rel[i, j, : n] = r
+                rel[i, j, : n] = r   #copy the relation content.
                 mask[i, 0, j, : n] = 1.0
                 mask[i, 1, j, : n] = 1.0
-
+    logging.info("create_mask_relation: Ended.")
     return rel, mask

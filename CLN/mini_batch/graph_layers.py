@@ -2,7 +2,6 @@ from keras.layers import Layer, InputSpec, merge
 from keras import regularizers, initializations, activations, constraints
 from keras import backend as KerasBackend
 import numpy as np
-import logging
 import sys
 sys.path.insert(0, '../../')
 from tools import *
@@ -354,7 +353,7 @@ class GraphHighwayByRel(Layer):
         # compute the context for each type of relations in each node:
         # context = sum(all neighbors with the same relation to the node)
         flattened_relations = KerasBackend.flatten(rel)
-        context_subset = x[flattened_relations[0], :][0]
+        context_subset = x[flattened_relations[0], :]
         # context = KerasBackend.reshape(context_subset,[n_nodes, n_rel, n_neigh, dim])
         context = context_subset
         context = context * mask_mul[:, :, :, None]

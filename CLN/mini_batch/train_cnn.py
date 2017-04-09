@@ -165,12 +165,12 @@ n_batchs = train_sample_size // batch_size
 if train_sample_size % batch_size > 0:
     n_batchs += 1
 model = create_cnn_model()
-mini_batch_ids_generator = MiniBatchIds(train_sample_size, batch_size=batch_size)
+train_mini_batch_ids_generator = MiniBatchIds(train_sample_size, batch_size=batch_size)
 
 for e in range(n_epochs):
     for b in range(n_batchs):
         batch_start = time.time()
-        mini_batch_ids = train_ids[mini_batch_ids_generator.get_mini_batch_ids(b)]
+        mini_batch_ids = train_ids[train_mini_batch_ids_generator.get_mini_batch_ids(b)]
         train_x = extract_featurs(paths, mini_batch_ids)
         train_y = labels[mini_batch_ids]
         valid_data = [valid_x, valid_y]

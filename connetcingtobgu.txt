@@ -38,4 +38,4 @@ running pubmed:
 running trax context:
     python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 256 -saving trax -batchtype context -flatmethod c
 running trax relation:
-    python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 10 -saving trax -batchtype relation -flatmethod c
+    python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 5 -saving trax -batchtype relation -flatmethod c
