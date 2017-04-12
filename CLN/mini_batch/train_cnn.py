@@ -14,9 +14,11 @@ import cPickle
 import logging
 from keras.optimizers import *
 from keras.objectives import *
+import keras
 from  keras.constraints import *
-from keras.utils.visualize_util import plot as kplt
+from keras.utils import plot_model as kplt
 from keras.layers import *
+from keras.models import Sequential
 from keras.models import Model
 sys.path.insert(0, '../../')
 import logger
@@ -73,7 +75,7 @@ def load_data(path):
     """
     logging.info("load_data - Started.")
     f = gzip.open(path, 'rb')
-    labels, rel_list, train_ids, valid_ids, test_ids, paths = cPickle.load(f)
+    labels, rel_list, train_ids, valid_ids, test_ids, paths,batches = cPickle.load(f)
     logging.debug(str(paths))
     labels = labels.astype('int64')
     logging.info("load_data - Ended.")
@@ -91,10 +93,48 @@ def extract_featurs(feats_paths, ids):
     feats = np.zeros((len(ids), product_width, product_height, product_channels), dtype=type(np.ndarray))
 
     for ii in range(len(ids)):
-        feats[ii] = ocv.imread(feats_paths[ids[ii]])
+        res = ocv.imread(feats_paths[ids[ii]])
+        res = res.astype('float32')
+        res /= 255
+        feats[ii] = res
+
     ans = feats
     logging.info("extract_featurs: Ended.")
     return ans
+
+def create_cfer2_model():
+    model = Sequential()
+
+    model.add(Conv2D(4, (3, 3), padding='same',
+                     input_shape=valid_x.shape[1:]))
+    model.add(Activation('relu'))
+    model.add(Conv2D(4, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Conv2D(8, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(Conv2D(8, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Flatten())
+    model.add(Dense(2048))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(n_classes))
+    model.add(Activation('softmax'))
+
+    # initiate RMSprop optimizer
+    opt = keras.optimizers.rmsprop(lr=0.0001, decay=1e-6)
+
+    # Let's train the model using RMSprop
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=opt,
+                  metrics=['accuracy'])
+    return model
 
 
 def create_cnn_model():
@@ -141,7 +181,7 @@ def create_cnn_model():
     model = Model(input=image_input_nodes, output=[top_nodes])
 
     # Let's train the model using RMSprop
-    model.compile(loss='sparse_categorical_crossentropy',
+    model.compile(loss='categorical_crossentropy',
                   optimizer='rmsprop',
                   metrics=['accuracy'])
     model.summary()
@@ -164,8 +204,14 @@ test_y = labels[test_ids]
 n_batchs = train_sample_size // batch_size
 if train_sample_size % batch_size > 0:
     n_batchs += 1
-model = create_cnn_model()
+model = create_cfer2_model()
 train_mini_batch_ids_generator = MiniBatchIds(train_sample_size, batch_size=batch_size)
+
+
+
+test_y = keras.utils.to_categorical(test_y, n_classes)
+valid_y = keras.utils.to_categorical(valid_y, n_classes)
+
 
 for e in range(n_epochs):
     for b in range(n_batchs):
@@ -173,10 +219,12 @@ for e in range(n_epochs):
         mini_batch_ids = train_ids[train_mini_batch_ids_generator.get_mini_batch_ids(b)]
         train_x = extract_featurs(paths, mini_batch_ids)
         train_y = labels[mini_batch_ids]
+        train_y = keras.utils.to_categorical(train_y, n_classes)
+        logging.error("shape of train_y: %s" % str(train_y.shape))
         valid_data = [valid_x, valid_y]
         # model.fit(train_x, numpy.expand_dims(train_y, -1), validation_data=valid_data, verbose=0,
         #           nb_epoch=1, batch_size=train_x.shape[0], shuffle=False)
-        model.fit([train_x] + [], np.expand_dims(train_y, -1), batch_size= train_x.shape[0], nb_epoch=1, validation_data=valid_data)
+        model.fit([train_x] + [], train_y, batch_size= train_x.shape[0], nb_epoch=1, validation_data=valid_data)
         batch_end = time.time()
         logging.info("batch %d in epoch %d. is done. time: %f." % (b, e, batch_end - batch_start))
 

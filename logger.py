@@ -66,7 +66,7 @@ class ColorHandler(logging.StreamHandler):
         }
         fm = self.format(record)
         color = msg_colors.get(record.levelno, "white")
-        self.stream.write(fm, color)
+        # self.stream.write(fm, color)
 
 
 c = ColorHandler()

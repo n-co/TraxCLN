@@ -178,24 +178,7 @@ class SaveResult(Callback):
         logging.debug("on_epoch_end, SaveResultCallback:  time: %f. " % (et - st))
 
 
-# class LRScheduler(Callback):
-#     def __init__(self, n_epoch):
-#         super(LRScheduler, self).__init__()
-#         self.max_epoch = n_epoch
-#         self.n_epoch = n_epoch
-#
-#     def on_epoch_begin(self, epoch, logs={}):
-#         logging.debug("LRSScheduler.on_epoch_begin was called.")
-#         assert hasattr(self.model.optimizer, 'learning_rate'), \
-#             'Optimizer must have a "learning_rate" attribute.'
-#
-#         if self.n_epoch == 0:
-#             self.n_epoch = self.max_epoch
-#             lr = self.model.optimizer.lr / 2.0
-#             self.model.optimizer.lr = lr
-#         else:
-#             self.n_epoch -= 1
-#             self.max_epoch = min(10, self.max_epoch - 1)
+
 
 class NanStopping(Callback):
     def __init__(self):
@@ -281,7 +264,7 @@ class Evaluator(Callback):
         accuracy = metrics.accuracy_score(y_true, y_pred, normalize=True, sample_weight=None)
         err = metrics.zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None)
 
-        logging.debug("Evaluator: on_epoch_end: done testing. acc. %f. err: %f." % (accuracy, err))
+        logging.info("Evaluator: on_epoch_end: done testing. acc. %f. err: %f." % (accuracy, err))
         f = open(self.log_file_path, 'a')
         f.write('\t\t%.4f\t%.4f\t%.4f\t%.4f\n' % (auc, f1, pre, rec))
         f.write('\t\t%.4f\t%.4f\n' % (accuracy, err))

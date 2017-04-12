@@ -43,19 +43,25 @@ def build_model():
                                     n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
                                     dropout=dropout, flat_method=fm)
     elif model_type == 'HCNN' and batch_type == "relation":
-        model = creat_cnn_relation(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape,
-                                   n_rel=rel_list.shape[-2],
-                                   n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
-                                   dropout=dropout, flat_method=fm)
+        model = create_hcnn_relation(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape,
+                                     n_rel=rel_list.shape[-2],
+                                     n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
+                                     dropout=dropout, flat_method=fm)
     elif model_type == 'CNN':
-        model = create_cnn(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape,
-                                   n_rel=rel_list.shape[-2],
-                                   n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
-                                   dropout=dropout, flat_method=fm)
+        model = create_cnn(input_shape=example_x[0].shape,n_classes=n_classes)
 
+    # model.summary()
+    # model.compile(optimizer=selected_optimizer, loss=loss)
+
+    opt = rmsprop(lr=0.0001, decay=1e-6)
     model.summary()
-    model.compile(optimizer=selected_optimizer, loss=loss)
+    # Let's train the model using RMSprop
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=opt,
+                  metrics=['accuracy'])
+
     logging.info("build_model: - Ended")
+
     stop_and_read(run_mode)
     return model
 
@@ -216,6 +222,19 @@ class SampleGenerator():
         self.n_samples = len(b[self.si])
         logging.info("SampleGenerator: constructor: Ended")
 
+    def read_from_disk(self,path):
+        res = ocv.imread(path)
+        res = res.astype('float32')
+        res /= 255
+        return res
+
+    def single_image_gen(self):
+        for i in range(len(p[self.si])):
+            x = self.read_from_disk(p[self.si][i])
+            x = np.expand_dims(x, axis=0)
+            y = l[self.si][i]
+            y = np.expand_dims(y, axis=0)
+            yield x, y
 
     def prepare_batch(self,ids, p, l, rl, rm):
         sx = extract_featurs(p, ids, task)
@@ -252,7 +271,7 @@ class SampleGenerator():
                 sx, sy, srl, srm = self.prepare_batch(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
                 # stop_and_read('debug')
             self.curr_batch += 1
-            if model_type=='CNN':
+            if model_type == 'CNN':
                 inp = sx
             else:
                 inp = [sx,srl,srm]
@@ -285,18 +304,17 @@ def run_nn_relation(i):
     valid_size = None
     local_callbacks = None
 
-    if i % batch_size == 0:
+    if (i+1) % (batch_size*5+1) == 0:
         valid_gen.build_gen()
         valid_batch_generator = valid_gen.gen
         valid_size = valid_gen.n_samples
         logging.debug("validation sample size: %d." % valid_size)
         test_gen.build_gen()
         performence_evaluator.set_gen(test_gen)
-        local_callbacks = callbacks
-
+        # local_callbacks = callbacks
 
     model.fit_generator(train_batch_generator, samples_per_epoch=train_size, nb_epoch=1,
-                        verbose=0, callbacks=local_callbacks,
+                        verbose=1, callbacks=local_callbacks,
                         validation_data=valid_batch_generator, nb_val_samples=valid_size,
                         class_weight=None,
                         max_q_size=10, nb_worker=1, pickle_safe=False,
@@ -317,6 +335,7 @@ def main_cln():
     global p , l , rl , rm , b
     global train_gen , valid_gen , test_gen
 
+
     # calculates variables for execution.
     dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, loss, \
     selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
@@ -334,6 +353,20 @@ def main_cln():
     # devide data into sub samples
     create_sub_samples()
 
+    # logging.info('PRECLN: started.')
+    # train_gen = SampleGenerator(sample_index=0, sample_name='train')
+    # valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
+    # test_gen = SampleGenerator(sample_index=2, sample_name='test')
+    # train_gen.build_gen()
+    # valid_gen.build_gen()
+    # test_gen.build_gen()
+    #
+    # model.fit_generator(train_gen.single_image_gen(), samples_per_epoch=train_gen.n_samples, nb_epoch=10,
+    #                     verbose=1, callbacks=None,
+    #                     validation_data=test_gen.single_image_gen(), nb_val_samples=test_gen.n_samples,
+    #                     class_weight=None, max_q_size=10, nb_worker=1,
+    #                     pickle_safe=False, initial_epoch=0, )
+    # logging.info('PRECLN: ended.')
 
     logging.info("CLN - Started.")
     stop_and_read(run_mode)

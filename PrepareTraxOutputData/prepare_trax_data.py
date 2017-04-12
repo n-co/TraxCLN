@@ -39,7 +39,7 @@ def format_ids_feats_labels_rel_list(probes):
         probe = probes[probe_id]
         for product in probe.products:
             product.relations = np.array(product.relations)
-            labels[product.id] = product.product_label
+            labels[product.id] = product.brand_label  #TODO: make sure this is product_label and not batch_label
             # feats[product.id] = product.features
             paths[product.id] = str(products_dir + product.patch_url)
             rel_list[product.id] = product.relations
@@ -121,7 +121,8 @@ def import_data():
         for row in reader:
             csv_length += 1
             # sample_type = row[2]
-            sample_type = get_sample_type(i)
+            probe_id = row[9]
+            sample_type = get_sample_type(probe_id)
             #TODO: remove sample type col fromsource csv file
             product = Product(row[0], row[1], sample_type, row[3], row[4], row[5], row[6], row[7], row[8], row[9],
                               row[10], row[11], probes[row[9]])
@@ -129,7 +130,7 @@ def import_data():
             probes[product.probe_id].products = np.append(probes[product.probe_id].products, product)
             sample_types[product.sample_type] = np.append(sample_types[product.sample_type], product.id)
 
-            if should_i_stop(i):
+            if should_i_stop(probe_id):
                 break
             i += 1
     logging.info("import_data - Ended.")
@@ -147,6 +148,11 @@ def prepare_trax_data():
     #     logging.debug("%s: %d", id, len(probes[id].shelves))
     #     logging.debug(str(map(lambda sh: map(lambda pr: pr.id, sh), probes[id].shelves)))
     logging.debug("length of train: %d valid: %d test: %d " % (len(train_ids),len(valid_ids),len(test_ids)))
+    logging.debug("number of different labels: %d" % np.max(labels))
+    logging.debug("train labels:")
+    logging.debug(str(np.bincount(labels[train_ids])))
+    logging.debug("test labels:")
+    logging.debug(str(np.bincount(labels[test_ids])))
     logging.info("prepare_trax_data- Ended.")
 
 prepare_trax_data()

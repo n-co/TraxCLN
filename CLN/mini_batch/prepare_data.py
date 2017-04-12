@@ -4,6 +4,7 @@ import cPickle
 import numpy
 from keras.optimizers import *
 from keras.objectives import *
+from keras.utils.np_utils import to_categorical
 
 
 def process_input_args(argv):
@@ -110,6 +111,8 @@ def get_global_configuration(argv):
     else:
         loss = binary_crossentropy
 
+    labels = to_categorical(labels, n_classes)
+
     # define the optimizer for weights finding.
     all_optimizers = {
         'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
@@ -176,7 +179,7 @@ def load_data_trax(path,batchtype):
     labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
     logging.debug(str(paths))
 
-    if batchtype=='relation':
+    if batchtype == 'relation':
         rel_list, rel_mask = create_mask_relation(rel_list)
     elif batchtype=='context':
         rel_list, rel_mask = create_mask_context(rel_list)
@@ -283,6 +286,8 @@ def extract_featurs(feats_paths, ids, task):
     if task == 'trax':
         for ii in range(len(ids)):
             res = ocv.imread(feats_paths[ids[ii]])
+            res = res.astype('float32')
+            res /= 255
             feats[ii] = res
         ans = feats
     else:

@@ -41,6 +41,10 @@ csv_length_limit = 50615  # 290000
 first_valid_index = 50013  # 289400  # TODO: make sure these values start at the begining of a probe.
 first_test_index = 50322  # 289700
 
+probes_for_train = 2000 #40000 products
+probes_for_valid = 500 #10000 #products
+probes_for_test = 500  #10000  #products
+
 eps = 200  # max distance between adjacent products
 
 
@@ -57,22 +61,53 @@ def dist(pr1, pr2):
     y2 = pr2.mask["y2"]
     return abs(y1 - y2)
 
+train_counter = 0
+valid_counter = 0
+test_counter = 0
+last_sample_type = 'train'
+prev_probe_id = None
 
-def get_sample_type(index):
-    if 0 <= index <= first_valid_index - 1:
-        sample_type = 'train'
-    elif first_valid_index <= index <= first_test_index - 1:
-        sample_type = 'valid'
+
+def get_sample_type(probe_id):
+    global train_counter,valid_counter, test_counter,last_sample_type,prev_probe_id
+    if probe_id == prev_probe_id:
+        return last_sample_type
+    if train_counter < probes_for_train:
+        train_counter += 1
+        last_sample_type = 'train'
+        prev_probe_id = probe_id
+        return 'train'
+    elif valid_counter < probes_for_valid:
+        valid_counter +=1
+        last_sample_type = 'valid'
+        prev_probe_id = probe_id
+        return 'valid'
     else:
-        sample_type = 'test'
-    return sample_type
+        test_counter +=1
+        last_sample_type = 'test'
+        prev_probe_id = probe_id
+        return 'test'
+
+#
+# def get_sample_type(index):
+#     if 0 <= index <= first_valid_index - 1:
+#         sample_type = 'train'
+#     elif first_valid_index <= index <= first_test_index - 1:
+#         sample_type = 'valid'
+#     else:
+#         sample_type = 'test'
+#     return sample_type
 
 
-def should_i_stop(index):
-    if csv_length_limit == -1:
-        return False
-    else:
-        return index > csv_length_limit
+# def should_i_stop(index):
+#     if csv_length_limit == -1:
+#         return False
+#     else:
+#         return index > csv_length_limit
+
+def should_i_stop(probe_id):
+    global train_counter, valid_counter, test_counter, last_sample_type, prev_probe_id
+    return test_counter > probes_for_test
 
 # enums
 rel_left = 0

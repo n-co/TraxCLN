@@ -24,6 +24,7 @@ class StringToIntConvertor:
 
 product_label_hasher = StringToIntConvertor()
 probe_to_batch_hasher = StringToIntConvertor()
+brand_label_hasher = StringToIntConvertor()
 
 
 class Probe:
@@ -64,7 +65,7 @@ class Product:
         self.id = int(id)
         self.brand_code = str(brand_code)
         self.sample_type = str(sample_type)
-        self.brand_label = int(brand_label)
+        self.brand_label = brand_label_hasher.string_to_int(brand_label)
         self.form_factor_label = int(form_factor_label)
         mask = mask.replace('\'', '\"')  # fix json string
         self.mask = json.loads(mask)

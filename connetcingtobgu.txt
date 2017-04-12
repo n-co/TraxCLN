@@ -35,7 +35,7 @@ setenv PATH /usr/local/cuda-8.0/bin\:$PATH
 cd /vildata/code/Trax/proj_nir_noam/CLN/mini_batch/
 running pubmed:
     python training.py -model Highway -data pubmed -dim 40 -nlayers 10 -nmean 2 -batch 256 -saving pubmed -batchtype context -flatmethod f
-running trax context:
+running trax context:  = freeze = mini batch
     python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 256 -saving trax -batchtype context -flatmethod c
-running trax relation:
+running trax relation: = full batch
     python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 5 -saving trax -batchtype relation -flatmethod c

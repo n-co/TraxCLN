@@ -5,8 +5,10 @@ import tensorflow as tensor
 from keras.callbacks import *
 from keras import objectives
 from keras.layers import *
-from keras.models import Model
+from keras.models import Model,Sequential
+from keras.optimizers import *
 from sklearn import metrics
+
 
 from keras.constraints import *
 from keras.layers.advanced_activations import *
@@ -24,8 +26,8 @@ def flat_by_method(flat_method, input_image_nodes, hidden_dim):
 
 def flat_by_conv(image_input_nodes, hidden_dim):
     cnn_act = 'relu'
-    nb_filer = 4
-    number_of_conv_structs = 5
+    nb_filer = 2
+    number_of_conv_structs = 3
     cnn_nodes = image_input_nodes
     # TODO: verify the order of args height and width
     cnn_nodes = Convolution2D(nb_filer, 3, 3, input_shape=(product_channels, product_height, product_width),
@@ -43,7 +45,7 @@ def flat_by_conv(image_input_nodes, hidden_dim):
 
     cnn_nodes = Flatten()(cnn_nodes)
     cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
-    cnn_nodes = Dense(1024, activation='relu', W_constraint=maxnorm(3), name="dnscnn1")(cnn_nodes)
+    cnn_nodes = Dense(2048, activation='relu', W_constraint=maxnorm(3), name="dnscnn1")(cnn_nodes)
     cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
 
     cnn_nodes = Dense(hidden_dim, activation=cnn_act, name="dnscnn2")(cnn_nodes)
@@ -190,33 +192,43 @@ def create_hccn_context(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_cla
     return model
 
 
-def create_cnn(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True,
-                       rel_carry=True, flat_method='c'):
+def create_cnn(input_shape,n_classes):
         logging.info("create_cnn: started.")
-        act = 'relu'
-        top_act = 'softmax' if n_classes > 1 else 'sigmoid'
-        n_classes = abs(n_classes)
-        init = 'glorot_normal'
-
-        trans_bias = - n_layers * 0.1
-
-        # x, rel, rel_mask
         input_image_nodes = Input(shape=input_shape, dtype='float32', name='inp_nodes')
+        cnn_nodes = flat_by_method('c', input_image_nodes, 2048)
+        top_nodes = Dense(output_dim=n_classes, input_dim=2048)(cnn_nodes)
+        top_nodes = Activation(activation='softmax')(top_nodes)
+        model = Model(input=[input_image_nodes ], output=[top_nodes])
+        return model
+        model = Sequential()
+        model.add(Conv2D(4, 3, 3, border_mode='same', input_shape=input_shape))
+        model.add(Activation('relu'))
+        model.add(Conv2D(4, 3, 3))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Conv2D(8, 3, 3, border_mode='same'))
+        model.add(Activation('relu'))
+        model.add(Conv2D(8, 3, 3))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Flatten())
+        model.add(Dense(2048))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(n_classes))
+        model.add(Activation('softmax'))
 
 
-        cnn_nodes = flat_by_method(flat_method, input_image_nodes, hidden_dim)
-
-        hidd_nodes = Dense(output_dim=hidden_dim, input_dim=input_shape, activation=act)(cnn_nodes)
-        top_nodes = Dense(output_dim=n_classes, input_dim=hidden_dim)(hidd_nodes)
-        top_nodes = Activation(activation=top_act)(top_nodes)
-
-        model = Model(input=[input_image_nodes], output=[top_nodes])
         logging.info("create_cnn: ended.")
         return model
 
 
-def creat_cnn_relation(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True,
-                       rel_carry=True, flat_method='c'):
+def create_hcnn_relation(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True,
+                         rel_carry=True, flat_method='c'):
     logging.info("create_hcnn_relation: started.")
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
