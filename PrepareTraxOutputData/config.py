@@ -18,21 +18,22 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)
 logging.info("Logger is up and running!")
 
-raw_data_dir = "/vildata/rawdata/Trax/proj_nir_noam/TraxInputData"
-csv_path = raw_data_dir + "/data.csv"
-probes_dir = raw_data_dir + "/Probes/"
-framed_probes_dir = raw_data_dir + "/FramedProbes/"
-products_dir = raw_data_dir + "/Products/"
-pickle_path = raw_data_dir + "/trax.pkl"
-
-
 product_width = 200
 product_height = 600
 product_channels = 3
 product_shape = (product_height, product_width, product_channels)
 product_wh = (product_width, product_height)
-
 product_size = product_wh[0] * product_wh[1] * product_channels
+
+size_string = "_" + str(product_width) + "_" + str(product_height)
+
+raw_data_dir = "/vildata/rawdata/Trax/proj_nir_noam/TraxInputData"
+csv_path = raw_data_dir + "/data.csv"
+probes_dir = raw_data_dir + "/Probes/"
+framed_probes_dir = raw_data_dir + "/FramedProbes/"
+products_dir = raw_data_dir + "/Products" + size_string + "/"
+pickle_path = raw_data_dir + "/trax" + size_string + ".pkl"
+
 
 pad_type = 'black'  # 'black' or 'noise'
 
@@ -41,11 +42,11 @@ csv_length_limit = 50615  # 290000
 first_valid_index = 50013  # 289400  # TODO: make sure these values start at the begining of a probe.
 first_test_index = 50322  # 289700
 
-probes_for_train = 2000 #40000 products
-probes_for_valid = 500 #10000 #products
-probes_for_test = 500  #10000  #products
+probes_for_train = 2000  # 40000  # products
+probes_for_valid = 500  # 10000  # products
+probes_for_test = 500  # 10000  # products
 
-eps = 200  # max distance between adjacent products
+eps = 200  # max distance (in pixels) between adjacent products
 
 
 def sort_key(product):
@@ -55,9 +56,7 @@ def sort_key(product):
 
 def dist(pr1, pr2):
     # distance function between two products
-    # x1 = (pr1.mask["x1"] + pr1.mask["x2"]) / 2
     y1 = pr1.mask["y2"]
-    # x2 = (pr2.mask["x1"] + pr2.mask["x2"]) / 2
     y2 = pr2.mask["y2"]
     return abs(y1 - y2)
 

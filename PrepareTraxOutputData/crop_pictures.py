@@ -95,4 +95,12 @@ def pad_product(img):
 def make_random_pixel():
     return (np.random.rand(3) * 256).astype(int)
 
+print "csv path:     " + csv_path
+print "probes dir:   " + probes_dir
+print "products dir: " + products_dir
+print "product W/H:  " + str(product_wh)
 crop_probes(csv_path, probes_dir, products_dir, product_wh)
+print "csv path:     " + csv_path
+print "probes dir:   " + probes_dir
+print "products dir: " + products_dir
+print "product W/H:  " + str(product_wh)
