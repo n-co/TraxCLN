@@ -19,12 +19,12 @@ import cv2 as ocv
 
 from keras.utils.np_utils import to_categorical
 
-path = '/vildata/rawdata/Trax/proj_nir_noam/TraxInputData/trax_200_600.pkl.gz'
+path = '/vildata/rawdata/Trax/proj_nir_noam/TraxInputData/trax_100_300.pkl.gz'
 models_path = "models/"
 
 batch_size = 32
 num_classes = 10
-epochs = 10
+epochs = 20
 data_augmentation = False
 
 print('hello')
@@ -106,7 +106,9 @@ def test_gen_creator():
             y_list = y_test[i:i+batch_size]
             # y_list = [np.expand_dims(y, axis=0) for y in y_list]
             i += batch_size
-            yield np.array(x_list), np.array(y_list)
+            x_list = np.array(x_list)
+            y_list = np.array(y_list)
+            yield x_list, y_list
 
 train_gen = train_gen_creator()
 test_gen = test_gen_creator()
@@ -147,22 +149,23 @@ model.compile(loss='categorical_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
-# model.fit_generator(train_gen, samples_per_epoch=200, nb_epoch=10,
-#                     verbose=1, callbacks=None,
-#                     validation_data=test_gen, nb_val_samples=100,
-#                     class_weight=None, max_q_size=1, nb_worker=1,
-#                     pickle_safe=False, initial_epoch=0,)
+# it is better when samples_per_epoch % amount_of_train_samples == 0
+model.fit_generator(train_gen, samples_per_epoch=256, nb_epoch=epochs,
+                    verbose=1, callbacks=None,
+                    validation_data=test_gen, nb_val_samples=128,
+                    class_weight=None, max_q_size=1, nb_worker=1,
+                    pickle_safe=False, initial_epoch=0,)
 
-model.fit_generator(train_gen,
-                    amount_of_train_samples // batch_size,
-                    epochs,
-                    1,
-                    None,
-                    test_gen,
-                    2,
-                    None,
-                    10,
-                    1,
-                    False,
-                    0,
-                    )
+# model.fit_generator(train_gen,
+#                     amount_of_train_samples // batch_size,
+#                     epochs,
+#                     1,
+#                     None,
+#                     test_gen,
+#                     2,
+#                     None,
+#                     10,
+#                     1,
+#                     False,
+#                     0,
+#                     )
