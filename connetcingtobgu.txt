@@ -38,4 +38,8 @@ running pubmed:
 running trax context:  = freeze = mini batch
     python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 256 -saving trax -batchtype context -flatmethod c
 running trax relation: = full batch
-    python training.py -model HCNN -data trax -dim 40 -nlayers 10 -nmean 2 -batch 5 -saving trax -batchtype relation -flatmethod c
+    python training.py -model HCNN -data trax_100_300 -dim 400 -nlayers 10 -nmean 2 -batch 5 -saving trax -batchtype relation -flatmethod c
+
+
+running trax folder
+    python training.py -model HCNN -data trax_100_300 -dim 400 -nlayers 10 -nmean 2 -batch 5 -saving trax -batchtype relation -flatmethod c

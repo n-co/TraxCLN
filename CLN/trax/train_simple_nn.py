@@ -9,29 +9,30 @@ import cPickle
 import gzip
 import numpy as np
 import cv2 as ocv
-
+from create_model import *
 from keras.utils.np_utils import to_categorical
+from keras.utils.visualize_util import plot as kplt
 
 np.random.seed(1234)
 path = '/vildata/rawdata/Trax/proj_nir_noam/TraxInputData/trax_100_300.pkl.gz'
 models_path = "models/"
 
-epochs = 100
+epochs = 20
 batch_size = 128
-spe =128
-nbvs =128
+spe = 16384
+nbvs = 16384
 
 print('hello')
 # The data, shuffled and split between train and test sets:
 f = gzip.open(path, 'rb')
 labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
 
-p_train = paths[0:128]
-y_train = labels[0:128]
+p_train = paths[0:16384]
+y_train = labels[0:16384]
 amount_of_train_samples = len(p_train)
 
-p_test = paths[0:128]
-y_test = labels[0:128]
+p_test = paths[16384:16384+2048]
+y_test = labels[16384:16384+2048]
 amount_of_test_samples = len(p_test)
 
 num_classes = np.max(labels) + 1
@@ -61,13 +62,12 @@ def read_from_disk(path):
 
 
 def generator_creator(paths, lables):
-    global count
     while True:
         i = 0
         while i < len(paths):
             x_list = [read_from_disk(p) for p in paths[i:i + batch_size]]
             # x_list = [np.expand_dims(x, axis=0) for x in x_list]
-            y_list = lables[i:i+batch_size]
+            y_list = lables[i:i + batch_size]
             # y_list = [np.expand_dims(y, axis=0) for y in y_list]
             i += batch_size
             x_list = np.array(x_list)
@@ -75,62 +75,25 @@ def generator_creator(paths, lables):
             yield x_list, y_list
 
 
-train_gen = generator_creator(p_train,y_train)
-test_gen = generator_creator(p_test,y_test)
+train_gen = generator_creator(p_train, y_train)
+test_gen = generator_creator(p_test, y_test)
 example_x = read_from_disk(paths[0])
 print('example x shape:', example_x.shape)
 
-
-model = Sequential()
-# TODO: try put our layers
-model.add(Conv2D(16, 3, 3, border_mode='same', input_shape=example_x.shape))
-model.add(Activation('relu'))
-model.add(Conv2D(16, 3, 3))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
-
-model.add(Conv2D(32, 3, 3, border_mode='same'))
-model.add(Activation('relu'))
-model.add(Conv2D(32, 3, 3))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
-
-model.add(Flatten())
-model.add(Dense(2048))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(num_classes))
-model.add(Activation('softmax'))
+model = create_cnn(example_x.shape, num_classes)
 
 # initiate RMSprop optimizer
 opt = keras.optimizers.rmsprop(lr=0.0001, decay=1e-6)
 
 model.summary()
-
+kplt(model, to_file=models_path + 'simple_nn' + '.png', show_shapes=True)
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
-# it is better when samples_per_epoch % amount_of_train_samples == 0
-model.fit_generator(generator= train_gen, samples_per_epoch=spe, nb_epoch=epochs,
+model.fit_generator(generator=train_gen, samples_per_epoch=spe, nb_epoch=epochs,
                     verbose=1, callbacks=None,
                     validation_data=test_gen, nb_val_samples=nbvs,
                     class_weight=None, max_q_size=1, nb_worker=1,
-                    pickle_safe=False, initial_epoch=0,)
-
-# model.fit_generator(train_gen,
-#                     amount_of_train_samples // batch_size,
-#                     epochs,
-#                     1,
-#                     None,
-#                     test_gen,
-#                     2,
-#                     None,
-#                     10,
-#                     1,
-#                     False,
-#                     0,
-#                     )
+                    pickle_safe=False, initial_epoch=0, )

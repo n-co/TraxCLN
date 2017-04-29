@@ -1,8 +1,5 @@
 import sys
 import logging
-import cv2 as ocv
-import numpy as np
-import time
 sys.path.insert(0, '../../')
 import logger
 from tools import *

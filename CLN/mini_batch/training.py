@@ -228,13 +228,37 @@ class SampleGenerator():
         res /= 255
         return res
 
-    def single_image_gen(self):
-        for i in range(len(p[self.si])):
-            x = self.read_from_disk(p[self.si][i])
-            x = np.expand_dims(x, axis=0)
-            y = l[self.si][i]
-            y = np.expand_dims(y, axis=0)
-            yield x, y
+    def prep(self,ids, p, l, rl, rm):
+        sx= [self.read_from_disk(ppp) for ppp in p[ids]]
+        sy = l[ids]
+        srm = rm[ids]
+        srl = rl[ids]
+        srl = np.subtract(srl, np.min(ids))
+        srl = np.maximum(srl, 0)
+        sx = np.array(sx)
+        sy = np.array(sy)
+        srl = np.array(srl)
+        srm = np.array(srm)
+        return sx, sy, srl, srm
+
+
+    def generator_creator(self):
+        bc = 128
+        i = 0
+        while True:
+            # ids = range(i,np.minimum(i+bc,len(p[self.si])))
+            ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
+            sx,sy,srl,srm = self.prep(ids,p[self.si],l[self.si],rl[self.si],rm[self.si])
+            i += bc
+            i %= len(p[self.si])
+            self.curr_batch +=1
+            self.curr_batch %=self.max_batches
+            if model_type == 'CNN':
+                inp = [sx]
+            else:
+                inp = [sx,srl,srm]
+            yield inp,sy
+
 
     def prepare_batch(self,ids, p, l, rl, rm):
         sx = extract_featurs(p, ids, task)
@@ -353,21 +377,21 @@ def main_cln():
     # devide data into sub samples
     create_sub_samples()
 
-    # logging.info('PRECLN: started.')
-    # train_gen = SampleGenerator(sample_index=0, sample_name='train')
-    # valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
-    # test_gen = SampleGenerator(sample_index=2, sample_name='test')
-    # train_gen.build_gen()
-    # valid_gen.build_gen()
-    # test_gen.build_gen()
-    #
-    # model.fit_generator(train_gen.single_image_gen(), samples_per_epoch=train_gen.n_samples, nb_epoch=10,
-    #                     verbose=1, callbacks=None,
-    #                     validation_data=test_gen.single_image_gen(), nb_val_samples=test_gen.n_samples,
-    #                     class_weight=None, max_q_size=10, nb_worker=1,
-    #                     pickle_safe=False, initial_epoch=0, )
-    # logging.info('PRECLN: ended.')
+    logging.info('PRECLN: started.')
+    train_gen = SampleGenerator(sample_index=0, sample_name='train')
+    valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
+    test_gen = SampleGenerator(sample_index=2, sample_name='test')
+    train_gen.build_gen()
+    valid_gen.build_gen()
+    test_gen.build_gen()
+    model.fit_generator(train_gen.generator_creator(), samples_per_epoch=train_gen.n_samples, nb_epoch=10,
 
+                        verbose=1, callbacks=None,
+                        validation_data=test_gen.generator_creator(), nb_val_samples=test_gen.n_samples,
+                        class_weight=None, max_q_size=10, nb_worker=1,
+                        pickle_safe=False, initial_epoch=0, )
+    logging.info('PRECLN: ended.')
+    exit()
     logging.info("CLN - Started.")
     stop_and_read(run_mode)
     for epoch in xrange(1, number_of_epochs):  # train the network a few times to get more accurate results.

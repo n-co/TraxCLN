@@ -1,0 +1,209 @@
+from config import *
+import random
+import numpy
+import sys
+import time
+from prepare_data import *
+from create_model import *
+from callbacks import *
+from keras.optimizers import *
+from keras.objectives import *
+from keras.utils.visualize_util import plot as kplt
+
+
+# GLOBAL VARIABLES
+dataset = task = n_layers = dim = shared = saving = nmean = batch_size = dropout = example_x = n_classes  = selected_optimizer = fm = model_type = None
+paths = labels = batches = rel_list = rel_mask = None
+train_ids = valid_ids = test_ids = None
+f_result = f_params = None
+model = performence_evaluator = callbacks = None
+p = l = rl = rm = b = None
+train_gen = valid_gen = test_gen = None
+
+
+def build_model():
+    logging.info("build_model: - Started")
+    global model
+    model = None
+    if model_type == 'HCNN':
+        model = create_hcnn_relation(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape,
+                                     n_rel=rel_list.shape[-2],
+                                     n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
+                                     dropout=dropout, flat_method=fm)
+    elif model_type == 'CNN':
+        model = create_cnn(input_shape=example_x[0].shape, n_classes=n_classes)
+
+
+    model.summary()
+    # Let's train the model using RMSprop
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=selected_optimizer,
+                  metrics=['accuracy','fscore','precision','recall'])
+
+    logging.info("build_model: - Ended")
+
+    stop_and_read(run_mode)
+    return model
+
+
+def log_model():
+    global f_params, f_result
+    logging.info("log_model: - Started.")
+    # Log information so far.
+    # Prints the model, in a json format, to the desired path.
+    json_string = model.to_json()
+    f_model = models_path + saving + '.json'
+    f = open(f_model, 'w')
+    f.write(json_string)
+    f.close()
+
+    kplt(model, to_file=models_path + saving + '.png', show_shapes=True)
+
+    # Define path for saving results.
+    f_params = best_models_path + saving + '.hdf5'
+
+    # Create a log.
+    f_result = logs_path + saving + '.txt'
+    f = open(f_result, 'w')
+    f.write('Training log:\n')
+    f.write('information structure:\n')
+    f.write('e#: epoch_id\n')
+    f.write('\tvalidation:\n')
+    f.write('\t\tloss\tval_los\t|\tv_auc\tv_f1\tv_pre\tv_rec\n')
+    f.write('\t\tv_auc\tv_err\n')
+    f.write('\ttest:\n')
+    f.write('\t\tt_auc\tt_f1\tt_pre\tt_rec\n')
+    f.write('\t\tt_acc\tt_err\n')
+    f.close()
+    logging.info("log_model: - Ended.")
+    stop_and_read(run_mode)
+    return f_result, f_params
+
+
+def get_information():
+    global performence_evaluator, callbacks
+    logging.info("get_information: - Started.")
+    performence_evaluator = Evaluator(test_gen=None, file_result=f_result, file_params=f_params)
+
+    callbacks = [performence_evaluator, NanStopping()]
+    # callbacks = None
+    logging.info("get_information: - Ended.")
+    stop_and_read(run_mode)
+    return performence_evaluator, callbacks
+
+
+def create_sub_samples():
+    global paths, labels, rel_list, batches
+    global train_ids, valid_ids, test_ids
+    global p, l, rl, rm, b
+
+    def project(indexes, paths, labels, rel_list, rel_mask, batches, offset):
+        p = paths[indexes]
+        l = labels[indexes]
+        rl = rel_list[indexes]
+        rl = np.subtract(rl, offset)
+        rl = np.maximum(rl, 0)
+        rm = rel_mask[indexes]
+        b = batches[indexes]
+        b = np.subtract(b, np.min(b))
+
+        return p, l, rl, rm, b
+
+    inp = [train_ids, valid_ids, test_ids]
+    offsets = [0, len(train_ids), len(train_ids) + len(valid_ids)]
+    p = [None, None, None]
+    l = [None, None, None]
+    rl = [None, None, None]
+    rm = [None, None, None]
+    b = [None, None, None]
+    for i in range(len(inp)):
+        p[i], l[i], rl[i], rm[i], b[i] = project(inp[i], paths, labels, rel_list, rel_mask, batches, offsets[i])
+
+
+class SampleGenerator():
+    def __init__(self, sample_index, sample_name):
+        logging.info("SampleGenerator: constructor: Started. designed for sample index %d called: %s." % (
+        sample_index, sample_name))
+        self.curr_batch = 0
+        self.si = sample_index
+        self.name = sample_name
+        self.train_ids_gen = MiniBatchIdsByProbeId(probe_serials=b[self.si], n_samples=len(b[self.si]),
+                                                   number_of_probes=np.max(b[self.si]) + 1,
+                                                   probes_per_batch=batch_size)
+        self.max_batches = (np.max(b[self.si]) + 1) // batch_size
+        self.n_samples = len(b[self.si])
+        logging.info("SampleGenerator: constructor: Ended")
+
+
+
+    def prepera_data(self, ids, p, l, rl, rm):
+        sx = [read_from_disk(ppp) for ppp in p[ids]]
+        sy = l[ids]
+        srm = rm[ids]
+        srl = rl[ids]
+        srl = np.subtract(srl, np.min(ids))
+        srl = np.maximum(srl, 0)
+        sx = np.array(sx)
+        sy = np.array(sy)
+        srl = np.array(srl)
+        srm = np.array(srm)
+        return sx, sy, srl, srm
+
+    def data_generator(self):
+        while True:
+            ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
+            sx, sy, srl, srm = self.prepera_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
+            self.curr_batch += 1
+            self.curr_batch %= self.max_batches
+            if model_type == 'CNN':
+                inp = [sx]
+            else:
+                inp = [sx, srl, srm]
+            yield inp,sy
+    def get_ytrue(self):
+        return l[self.si]
+
+
+def main_cln():
+    global dataset, task, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, loss, selected_optimizer, batch_type, fm, model_type
+    global paths, labels, batches, rel_list, rel_mask
+    global train_ids, valid_ids, test_ids
+    global f_result, f_params
+    global model, performence_evaluator, callbacks
+    global p, l, rl, rm, b
+    global train_gen, valid_gen, test_gen
+
+    # calculates variables for execution.
+    dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
+    selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
+    paths, batches, fm = get_global_configuration(sys.argv)
+
+    # build a keras model to be trained.
+    build_model()
+
+    # write information about model into log files.
+    log_model()
+
+    # get generators and additional variables.
+    get_information()
+
+    # devide data into sub samples
+    create_sub_samples()
+
+    logging.info('PRECLN: started.')
+    train_gen = SampleGenerator(sample_index=0, sample_name='train')
+    valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
+    test_gen = SampleGenerator(sample_index=2, sample_name='test')
+
+    performence_evaluator.test_gen = test_gen
+
+
+    model.fit_generator(train_gen.data_generator(), samples_per_epoch=test_gen.n_samples, nb_epoch=number_of_epochs,
+                        verbose=1, callbacks=callbacks,
+                        validation_data=valid_gen.data_generator(), nb_val_samples=valid_gen.n_samples,
+                        class_weight=None, max_q_size=10, nb_worker=1,
+                        pickle_safe=False, initial_epoch=0, )
+    logging.info('PRECLN: ended.')
+
+
+main_cln()

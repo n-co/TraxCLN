@@ -5,6 +5,8 @@ import numpy
 from keras.optimizers import *
 from keras.objectives import *
 from keras.utils.np_utils import to_categorical
+import numpy as np
+import cv2 as ocv
 
 
 def process_input_args(argv):
@@ -17,20 +19,17 @@ def process_input_args(argv):
     i = 1
     # set default args.
     arg_dict = {
-        '-data': 'pubmed',  # chosing the learning data set: trax, pubmed, movielens, software.
-        '-saving': 'pubmed',  # log file name.
-        '-model': '',  # type of NN for each column network. Highway/Dence/
-        '-batch': 100,  # batch size for mini-batch version.
-        '-y': 1,  # incase of multilabel training, decides on which one net is trained.
+        '-data': 'trax_100_300',  # chosing the learning data set: trax of different sizes.
+        '-saving': 'trax_100_300',  # log file name.
+        '-model': 'HCNN',  # type of NN for each column network. HCNN/CNN
+        '-batch': 5,  # batch size for mini-batch version.
         '-nlayers': 10,  # number of layers in each highway network.
-        '-dim': 50,  # number of nodes in each layer of each coloumn network.
+        '-dim': 400,  # number of nodes in each layer of each coloumn network.
         '-shared': 1,  # indicator. 1: parameters will be shared between coloumns. 0: no sharing.
-        '-nmean': 1,  # regulzation factor. shoule be 1<=nmean<=number_of_relations
-        '-reg': '',  # indicator: dr: dropout. nothing: no dropout.
-        '-opt': 'RMS',  # or Adam. an optimizer for paramater tuning.
+        '-nmean': 2,  # regulzation factor. shoule be 1<=nmean<=number_of_relations
+        '-reg': 'dr',  # indicator: dr: dropout. nothing: no dropout.
+        '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
         '-seed': 1234,  # used to make random decisions repeat.
-        '-trainlimit': -1,  # a limitation on the size of train set.
-        '-batchtype': 'context',  # 'context' / 'relation'. changes architecture: mini or full batch.
         '-flatmethod': 'c'  # 'c' -CNN. 'f' - Flat. else - No Flat.
     }
     # Update args to contain the user's desired configuration.
@@ -43,8 +42,6 @@ def process_input_args(argv):
     arg_dict['-shared'] = int(arg_dict['-shared'])
     arg_dict['-nmean'] = int(arg_dict['-nmean'])
     arg_dict['-seed'] = int(arg_dict['-seed'])
-    arg_dict['-y'] = int(arg_dict['-y'])
-    arg_dict['-trainlimit'] = int(arg_dict['-trainlimit'])
     logging.info("process_input_args: Ended.")
     return arg_dict
 
@@ -60,12 +57,7 @@ def get_global_configuration(argv):
     seed = args['-seed']
     numpy.random.seed(seed)
     dataset = args['-data']
-    task = 'software'
-    if 'pubmed' in dataset:
-        task = 'pubmed'
-    elif 'movie' in dataset:
-        task = 'movie'
-    elif 'trax' in dataset:
+    if 'trax' in dataset:
         task = 'trax'
     dataset = data_sets_dir + dataset + '.pkl.gz'
     model_type = args['-model']
@@ -74,10 +66,7 @@ def get_global_configuration(argv):
     shared = args['-shared']
     saving = args['-saving']
     nmean = args['-nmean']
-    yidx = args['-y']
     batch_size = int(args['-batch'])
-    train_limit = args['-trainlimit']
-    batch_type = args['-batchtype']
     fm = args['-flatmethod']
 
     if 'dr' in args['-reg']:
@@ -85,89 +74,36 @@ def get_global_configuration(argv):
     else:
         dropout = False
 
-    if task == 'trax':
-        labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data_trax(dataset,batch_type)
-    else:
-        feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids = load_data(dataset)
-        paths = feats
-        batches = feats #TODO: this is dummy wo it will be of correct data type
+    labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data(dataset)
 
     example_x = extract_featurs(paths, [0], task)
-
-    if train_limit == -1:
-        train_sample_size = len(train_ids)
-    else:
-        train_sample_size = train_limit
 
     labels = labels.astype('int64')
 
 
     # the number of classes is max+1 since the first class is 0.
-    # in binary classification, this parameter is probably not used.
-    n_classes = numpy.max(labels)
-    if n_classes > 1:
-        n_classes += 1
-        loss = sparse_categorical_crossentropy
-    else:
-        loss = binary_crossentropy
+    n_classes = numpy.max(labels) + 1
 
     labels = to_categorical(labels, n_classes)
 
     # define the optimizer for weights finding.
     all_optimizers = {
+        'RMS2': rmsprop(lr=0.0001, decay=1e-6),
         'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
         'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
     }
     selected_optimizer = all_optimizers[args['-opt']]
 
-    if batch_type =='context':
-        n_batchs = train_sample_size // batch_size
-    else:
-        n_batchs = np.max(batches) + 1
-    if train_sample_size % batch_size > 0:
-        n_batchs += 1
 
     logging.info("get_global_configuration - Ended.")
     stop_and_read(run_mode)
     return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
-           loss, selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-           paths, batches, train_sample_size, n_batchs, batch_type, fm
+           selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
+           paths, batches, fm
 
 
-def create_mask_context(rel_list):
-    """
-    reformats a given relation list to contain list elements all of the same size.
-    :param rel_list: a list of size n_nodes = |sample|+|valid|+|test|. each elemt is a list of size n_rels = r.
-                  each of these lists is of a different length
-    :return: rel: same as relation list, but padded with 0's were no relation applies.
-              TODO: this might mean that all are in a relation with sample 0. check.
-    :return: mask: formmated exactly like rel, but does not contain actual ids for samples in realtion,
-                    but rather 0 or 1.
-              TODO: is this used to handle the concern above?
-    """
-    n_nodes = len(rel_list)
-    n_rels = len(rel_list[0])
-    max_neigh = 0
 
-    for sample in rel_list:
-        for rel in sample:
-            max_neigh = max(max_neigh, len(rel))
-
-    rel = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='int64')
-    mask = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='float32')
-
-    for i, sample in enumerate(rel_list):  # go over all samples, while saving a reference to to
-        # the index of a sample and the sample itself.
-        for j, r in enumerate(sample):  # go over all relations of an example, while saving
-            # a reference to the index of the relation and the relation itself.
-            n = len(r)
-            rel[i, j, : n] = r
-            mask[i, j, : n] = 1.0
-
-    return rel, mask
-
-
-def load_data_trax(path,batchtype):
+def load_data(path):
     """
     loads data from a pcl file into memory.
     :param: path: full path to a gzip file, containing cPickle data.
@@ -178,56 +114,9 @@ def load_data_trax(path,batchtype):
     f = gzip.open(path, 'rb')
     labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
     logging.debug(str(paths))
-
-    if batchtype == 'relation':
-        rel_list, rel_mask = create_mask_relation(rel_list)
-    elif batchtype=='context':
-        rel_list, rel_mask = create_mask_context(rel_list)
+    rel_list, rel_mask = create_mask_relation(rel_list)
     logging.info("load_data - Ended.")
     return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches
-
-
-def load_data(path):
-    """
-    loads data from a pcl file into memory. for every dataset but trax.
-    :param: path: full path to a gzip file, containing cPickle data.
-    :return: content of cPickle data, in seperate arrays all of the size.
-            this means, for every arr returned, a.shape[0] is the same
-    """
-    logging.info("load_data - Started.")
-    f = gzip.open(path, 'rb')
-    feats, labels, rel_list, train_ids, valid_ids, test_ids = cPickle.load(f)
-    rel_list, rel_mask = create_mask_context(rel_list)
-    logging.info("load_data - Ended.")
-    return feats, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids
-
-
-class MiniBatchIds:
-    """
-    A class designed to generate bacthes of ids (integers) in certain sub-ranges of 0 to some n.
-    :ivar ids: an array of all integers in the interval [0,n_samples-1] (including edges)
-    :ivar: batch_size: the size of a single batch.
-    """
-
-    def __init__(self, n_samples, batch_size):
-        """
-        :param n_samples: the number of samples in the entire training set.
-        :param batch_size: the size of a single batch.
-        """
-        self.ids = numpy.arange(n_samples)
-        self.batch_size = batch_size
-
-    def get_mini_batch_ids(self, batch_id):
-        """
-        :param: batch_id: the index of the current batch. relevant ids can be calculated from the list by this index.
-        :return: an array of indexes, continious, describing ids of the burrent batch.
-        :operations: when batch_id is 0, the ids array is suffled. this happens at the begining of every epoch, so every
-                     epoch covers all train ids, but in a different order.
-        """
-        # TODO: implement this in other version.
-        if batch_id == 0:
-            numpy.random.shuffle(self.ids)
-        return self.ids[self.batch_size * batch_id: self.batch_size * (batch_id + 1)]
 
 
 class MiniBatchIdsByProbeId:
@@ -282,6 +171,12 @@ class MiniBatchIdsByProbeId:
     def get_mini_batch_ids(self,i):
         return self.final[i]
 
+
+def read_from_disk( path):
+    res = ocv.imread(path)
+    res = res.astype('float32')
+    res /= 255
+    return res
 
 def extract_featurs(feats_paths, ids, task):
     """

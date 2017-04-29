@@ -26,8 +26,8 @@ def flat_by_method(flat_method, input_image_nodes, hidden_dim):
 
 def flat_by_conv(image_input_nodes, hidden_dim):
     cnn_act = 'relu'
-    nb_filer = 2
-    number_of_conv_structs = 3
+    nb_filer = 16
+    number_of_conv_structs = 2
     cnn_nodes = image_input_nodes
     # TODO: verify the order of args height and width
     cnn_nodes = Convolution2D(nb_filer, 3, 3, input_shape=(product_channels, product_height, product_width),
@@ -200,29 +200,6 @@ def create_cnn(input_shape,n_classes):
         top_nodes = Activation(activation='softmax')(top_nodes)
         model = Model(input=[input_image_nodes ], output=[top_nodes])
         return model
-        model = Sequential()
-        model.add(Conv2D(4, 3, 3, border_mode='same', input_shape=input_shape))
-        model.add(Activation('relu'))
-        model.add(Conv2D(4, 3, 3))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Conv2D(8, 3, 3, border_mode='same'))
-        model.add(Activation('relu'))
-        model.add(Conv2D(8, 3, 3))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Flatten())
-        model.add(Dense(2048))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(n_classes))
-        model.add(Activation('softmax'))
-
-
         logging.info("create_cnn: ended.")
         return model
 
