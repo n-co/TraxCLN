@@ -57,19 +57,19 @@ def flat_by_flat(image_input_nodes, hidden_dim):
     return cnn_nodes
 
 def create_cnn(input_shape,n_classes):
-        logging.info("create_cnn: started.")
+        logging.debug("create_cnn: started.")
         input_image_nodes = Input(shape=input_shape, dtype='float32', name='inp_nodes')
         cnn_nodes = flat_by_method('c', input_image_nodes, 2048)
         top_nodes = Dense(output_dim=n_classes, input_dim=2048)(cnn_nodes)
         top_nodes = Activation(activation='softmax')(top_nodes)
         model = Model(input=[input_image_nodes ], output=[top_nodes])
-        logging.info("create_cnn: ended.")
+        logging.debug("create_cnn: ended.")
         return model
 
 
 def create_hcnn_relation(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_classes, shared, nmean=1, dropout=True,
                          rel_carry=True, flat_method='c'):
-    logging.info("create_hcnn_relation: started.")
+    logging.debug("create_hcnn_relation: started.")
     act = 'relu'
     top_act = 'softmax' if n_classes > 1 else 'sigmoid'
     n_classes = abs(n_classes)
@@ -106,5 +106,5 @@ def create_hcnn_relation(n_layers, hidden_dim, input_shape, n_rel, n_neigh, n_cl
     top_nodes = Activation(activation=top_act)(top_nodes)
 
     model = Model(input=[input_image_nodes, inp_rel, inp_rel_mask], output=[top_nodes])
-    logging.info("create_hcnn_relation: ended.")
+    logging.debug("create_hcnn_relation: ended.")
     return model

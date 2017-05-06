@@ -15,7 +15,7 @@ def process_input_args(argv):
     :param argv: the command line args that were passed.
     :return: arg_dict: a json dictionary containing args in the desire.
     """
-    logging.info("process_input_args: Started.")
+    logging.debug("process_input_args: Started.")
     i = 1
     # set default args.
     arg_dict = {
@@ -42,7 +42,7 @@ def process_input_args(argv):
     arg_dict['-shared'] = int(arg_dict['-shared'])
     arg_dict['-nmean'] = int(arg_dict['-nmean'])
     arg_dict['-seed'] = int(arg_dict['-seed'])
-    logging.info("process_input_args: Ended.")
+    logging.debug("process_input_args: Ended.")
     return arg_dict
 
 
@@ -52,7 +52,7 @@ def get_global_configuration(argv):
     :param argv: the command line args that were passed.
     :return: many variables to be used as globals in main.
     """
-    logging.info("get_global_configuration - Started.")
+    logging.debug("get_global_configuration - Started.")
     args = process_input_args(argv)
     seed = args['-seed']
     numpy.random.seed(seed)
@@ -64,7 +64,7 @@ def get_global_configuration(argv):
     n_layers = args['-nlayers']
     dim = args['-dim']
     shared = args['-shared']
-    saving = args['-saving']
+    saving = args['-saving'] + '_' + args['-model']
     nmean = args['-nmean']
     batch_size = int(args['-batch'])
     fm = args['-flatmethod']
@@ -95,7 +95,7 @@ def get_global_configuration(argv):
     selected_optimizer = all_optimizers[args['-opt']]
 
 
-    logging.info("get_global_configuration - Ended.")
+    logging.debug("get_global_configuration - Ended.")
     stop_and_read(run_mode)
     return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
            selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
@@ -110,12 +110,12 @@ def load_data(path):
     :return: content of cPickle data, in seperate arrays all of the size.
             this means, for every arr returned, a.shape[0] is the same
     """
-    logging.info("load_data - Started.")
+    logging.debug("load_data - Started.")
     f = gzip.open(path, 'rb')
     labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
-    logging.debug(str(paths))
+    logging.info(str(paths))
     rel_list, rel_mask = create_mask_relation(rel_list)
-    logging.info("load_data - Ended.")
+    logging.debug("load_data - Ended.")
     return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches
 
 
@@ -130,8 +130,8 @@ class MiniBatchIdsByProbeId:
         :param number_of_probes:
         :param probes_per_batch:
         '''
-        logging.info("MiniBatchIdsByProbeId constructor")
-        logging.info("can handle: probes: %d. products: %d. probes in batch: %d." %(n_samples,number_of_probes,probes_per_batch))
+        logging.debug("MiniBatchIdsByProbeId constructor")
+        logging.debug("can handle: probes: %d. products: %d. probes in batch: %d." %(n_samples,number_of_probes,probes_per_batch))
         # probes_arr = a numpy array of lists. each list will contain the ids of the products
         self.probes_arr = np.empty(number_of_probes, dtype=object)
         for i in xrange(number_of_probes):
@@ -154,13 +154,13 @@ class MiniBatchIdsByProbeId:
         #     for i in xrange(len(self.probes_arr)):
         #         numpy.random.shuffle(self.probes_arr[i])
 
-        logging.info("MiniBatchIdsByProbeId: get_mini_batch_ids: started.")
+        logging.debug("MiniBatchIdsByProbeId: get_mini_batch_ids: started.")
         product_ids = []
         for product_list in self.probes_arr[self.probes_per_batch * batch_id: self.probes_per_batch * (batch_id + 1)]:
             product_ids = (product_ids + product_list)
         product_ids = np.array(product_ids)
-        # logging.debug("MiniBatchIdsByProbeId: get_mini_batch_ids: product_ids: %s" % str(product_ids))
-        logging.info("MiniBatchIdsByProbeId: get_mini_batch_ids: Ended.")
+        # logging.info("MiniBatchIdsByProbeId: get_mini_batch_ids: product_ids: %s" % str(product_ids))
+        logging.debug("MiniBatchIdsByProbeId: get_mini_batch_ids: Ended.")
         return product_ids
 
     def build_final(self):
@@ -185,8 +185,8 @@ def extract_featurs(feats_paths, ids, task):
     :param task: the task this NN is performing
     :return: a tensor containing the feautures in desired format.
     """
-    logging.info("extract_featurs: Started.")
-    logging.info("there are %d examples. batch size is %d. task is %s" % (len(feats_paths), len(ids), task))
+    logging.debug("extract_featurs: Started.")
+    logging.debug("there are %d examples. batch size is %d. task is %s" % (len(feats_paths), len(ids), task))
     feats = np.zeros((len(ids), product_width, product_height, product_channels), dtype=type(np.ndarray))
     if task == 'trax':
         for ii in range(len(ids)):
@@ -197,7 +197,7 @@ def extract_featurs(feats_paths, ids, task):
         ans = feats
     else:
         ans = feats_paths[ids]
-    logging.info("extract_featurs: Ended.")
+    logging.debug("extract_featurs: Ended.")
     return ans
 
 
@@ -207,7 +207,7 @@ def create_mask_relation(rel_list):
     :param rel_list: a relation list. size: n_nodes = |train|+|valid|+|test|. every node contains n_rels relations.
     :return:
     """
-    logging.info("create_mask_relation: Started.")
+    logging.debug("create_mask_relation: Started.")
     n_nodes = len(rel_list)
     n_rels = len(rel_list[0])
     max_neigh = 0
@@ -231,5 +231,5 @@ def create_mask_relation(rel_list):
                 rel[i, j, : n] = r   #copy the relation content.
                 mask[i, 0, j, : n] = 1.0
                 mask[i, 1, j, : n] = 1.0
-    logging.info("create_mask_relation: Ended.")
+    logging.debug("create_mask_relation: Ended.")
     return rel, mask

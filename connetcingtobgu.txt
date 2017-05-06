@@ -43,3 +43,6 @@ running trax relation: = full batch
 
 running trax folder
     python training.py -model HCNN -data trax_100_300 -dim 400 -nlayers 10 -nmean 2 -batch 5 -saving trax -batchtype relation -flatmethod c
+
+
+screen commands

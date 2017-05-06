@@ -9,6 +9,7 @@ from callbacks import *
 from keras.optimizers import *
 from keras.objectives import *
 from keras.utils.visualize_util import plot as kplt
+from random import  randint
 
 
 # GLOBAL VARIABLES
@@ -22,7 +23,7 @@ train_gen = valid_gen = test_gen = None
 
 
 def build_model():
-    logging.info("build_model: - Started")
+    logging.debug("build_model: - Started")
     global model
     model = None
     if model_type == 'HCNN':
@@ -40,7 +41,7 @@ def build_model():
                   optimizer=selected_optimizer,
                   metrics=['accuracy','fscore','precision','recall'])
 
-    logging.info("build_model: - Ended")
+    logging.debug("build_model: - Ended")
 
     stop_and_read(run_mode)
     return model
@@ -48,7 +49,7 @@ def build_model():
 
 def log_model():
     global f_params, f_result
-    logging.info("log_model: - Started.")
+    logging.debug("log_model: - Started.")
     # Log information so far.
     # Prints the model, in a json format, to the desired path.
     json_string = model.to_json()
@@ -67,27 +68,22 @@ def log_model():
     f = open(f_result, 'w')
     f.write('Training log:\n')
     f.write('information structure:\n')
-    f.write('e#: epoch_id\n')
-    f.write('\tvalidation:\n')
-    f.write('\t\tloss\tval_los\t|\tv_auc\tv_f1\tv_pre\tv_rec\n')
-    f.write('\t\tv_auc\tv_err\n')
-    f.write('\ttest:\n')
-    f.write('\t\tt_auc\tt_f1\tt_pre\tt_rec\n')
-    f.write('\t\tt_acc\tt_err\n')
+    mn =str(model.metrics_names)
+    f.write("epoch_id: train: %s---valid: %s---test: %s\n" %(mn,mn,mn))
     f.close()
-    logging.info("log_model: - Ended.")
+    logging.debug("log_model: - Ended.")
     stop_and_read(run_mode)
     return f_result, f_params
 
 
 def get_information():
     global performence_evaluator, callbacks
-    logging.info("get_information: - Started.")
-    performence_evaluator = Evaluator(test_gen=None, file_result=f_result, file_params=f_params)
+    logging.debug("get_information: - Started.")
+    performence_evaluator = Evaluator( file_result=f_result, file_params=f_params)
 
     callbacks = [performence_evaluator, NanStopping()]
     # callbacks = None
-    logging.info("get_information: - Ended.")
+    logging.debug("get_information: - Ended.")
     stop_and_read(run_mode)
     return performence_evaluator, callbacks
 
@@ -122,7 +118,7 @@ def create_sub_samples():
 
 class SampleGenerator():
     def __init__(self, sample_index, sample_name):
-        logging.info("SampleGenerator: constructor: Started. designed for sample index %d called: %s." % (
+        logging.debug("SampleGenerator: constructor: Started. designed for sample index %d called: %s." % (
         sample_index, sample_name))
         self.curr_batch = 0
         self.si = sample_index
@@ -132,7 +128,7 @@ class SampleGenerator():
                                                    probes_per_batch=batch_size)
         self.max_batches = (np.max(b[self.si]) + 1) // batch_size
         self.n_samples = len(b[self.si])
-        logging.info("SampleGenerator: constructor: Ended")
+        logging.debug("SampleGenerator: constructor: Ended")
 
 
 
@@ -150,8 +146,16 @@ class SampleGenerator():
         return sx, sy, srl, srm
 
     def data_generator(self):
+        logging.debug("SampleGenerator: %s has been started."%self.name)
+        # i and bc are used for constant batch sizes.
+        # it is much faster than chaning batch size.
+        i=0
+        bc = 128
         while True:
-            ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
+            # ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
+            ids = range(i,np.minimum(i+bc,self.n_samples))
+            i += bc
+            if i>self.n_samples: i=0
             sx, sy, srl, srm = self.prepera_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
             self.curr_batch += 1
             self.curr_batch %= self.max_batches
@@ -160,6 +164,7 @@ class SampleGenerator():
             else:
                 inp = [sx, srl, srm]
             yield inp,sy
+
     def get_ytrue(self):
         return l[self.si]
 
@@ -190,20 +195,23 @@ def main_cln():
     # devide data into sub samples
     create_sub_samples()
 
-    logging.info('PRECLN: started.')
+    logging.debug('PRECLN: started.')
     train_gen = SampleGenerator(sample_index=0, sample_name='train')
     valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
     test_gen = SampleGenerator(sample_index=2, sample_name='test')
 
+    # performence_evaluator.train_gen = train_gen
+    # performence_evaluator.valid_gen = valid_gen
     performence_evaluator.test_gen = test_gen
 
+    # callbacks = None
 
-    model.fit_generator(train_gen.data_generator(), samples_per_epoch=test_gen.n_samples, nb_epoch=number_of_epochs,
+
+    model.fit_generator(train_gen.data_generator(), samples_per_epoch=train_gen.n_samples, nb_epoch=number_of_epochs,
                         verbose=1, callbacks=callbacks,
                         validation_data=valid_gen.data_generator(), nb_val_samples=valid_gen.n_samples,
                         class_weight=None, max_q_size=10, nb_worker=1,
                         pickle_safe=False, initial_epoch=0, )
-    logging.info('PRECLN: ended.')
-
+    logging.debug('PRECLN: ended.')
 
 main_cln()
