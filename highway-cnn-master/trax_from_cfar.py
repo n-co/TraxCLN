@@ -66,13 +66,9 @@ def generator_creator(paths, lables):
         i = 0
         while i < len(paths):
             x_list = [read_from_disk(p) for p in paths[i:i + batch_size]]
-            # x_list = [np.expand_dims(x, axis=0) for x in x_list]
             y_list = lables[i:i+batch_size]
-            # y_list = [np.expand_dims(y, axis=0) for y in y_list]
             i += batch_size
-            x_list = np.array(x_list)
-            y_list = np.array(y_list)
-            yield x_list, y_list
+            yield np.array(x_list), np.array(y_list)
 
 
 train_gen = generator_creator(p_train,y_train)

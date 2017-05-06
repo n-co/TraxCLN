@@ -46,7 +46,7 @@ class Evaluator(Callback):
         self.minPatience = min_patience
         self.maxPatience = max_patience
         logging.debug("Evaluator: constructor: ended.")
-# 176 205 430
+
     def on_epoch_begin(self, epoch, logs=None):
         logging.debug("Evaluator: on_epoch_begin: started.")
         logging.debug("Evaluator: on_epoch_begin: ended.")
@@ -73,7 +73,7 @@ class Evaluator(Callback):
             f.write("%s--" % metrics_ans[i])
         f.close()
 
-        f1 = metrics_ans[0][2]  # learn from f1 of valid
+        f1 = metrics_ans[0][2]  # TODO: make sure we learn from f1 of valid
         if f1 > self.bestResult:
             logging.info("Evaluator: on_epoch_end: best result imporoved! saving weights!")
             self.bestResult = f1

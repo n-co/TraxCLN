@@ -19,7 +19,7 @@ train_sample_size = n_batchs = None
 hidden_data = hidd_input_funcs = train_mini_batch_ids_generator = None
 valid_x = valid_y = test_x = test_y = None
 f_result = f_params = None
-model = performence_evaluator = callbacks = None
+model = performance_evaluator = callbacks = None
 p = l = rl = rm = b = None
 train_gen = valid_gen = test_gen = None
 
@@ -102,7 +102,7 @@ def log_model():
 
 def get_information():
     global hidden_data, train_mini_batch_ids_generator, valid_x, valid_y, test_x, test_y, \
-        performence_evaluator, callbacks, hidd_input_funcs
+        performance_evaluator, callbacks, hidd_input_funcs
 
     logging.info("get_information: - Started.")
     # create a variable to hold hidden features passed through net so relations can be entered as inputs.
@@ -182,7 +182,7 @@ def run_nn_context(i):
 
         # performence evaluator is activated at the end on an epoch. this makes sure it is up to date.
         # note that form one epoch to the other, the context change, not the features.
-        performence_evaluator.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
+        performance_evaluator.update_data([valid_x] + valid_context, valid_y, [test_x] + test_context, test_y)
 
         # this loop simply wrapps lists into tuples, and allow adressing each member in the tuple with a name.
         # this loop actually runs twice in each epoch: once for valid, once for test.
@@ -334,7 +334,7 @@ def run_nn_relation(i):
         valid_size = valid_gen.n_samples
         logging.debug("validation sample size: %d." % valid_size)
         test_gen.build_gen()
-        performence_evaluator.set_gen(test_gen)
+        performance_evaluator.set_gen(test_gen)
         # local_callbacks = callbacks
 
     model.fit_generator(train_batch_generator, samples_per_epoch=train_size, nb_epoch=1,
@@ -355,7 +355,7 @@ def main_cln():
     global hidden_data , hidd_input_funcs , train_mini_batch_ids_generator
     global valid_x , valid_y , test_x , test_y
     global f_result , f_params
-    global model , performence_evaluator , callbacks
+    global model , performance_evaluator , callbacks
     global p , l , rl , rm , b
     global train_gen , valid_gen , test_gen
 

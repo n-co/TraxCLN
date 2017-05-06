@@ -7,6 +7,7 @@ from keras.objectives import *
 from keras.utils.np_utils import to_categorical
 import numpy as np
 import cv2 as ocv
+import time
 
 
 def process_input_args(argv):
@@ -20,7 +21,7 @@ def process_input_args(argv):
     # set default args.
     arg_dict = {
         '-data': 'trax_100_300',  # chosing the learning data set: trax of different sizes.
-        '-saving': 'trax_100_300',  # log file name.
+        '-saving': None,  # log file name. default is as data
         '-model': 'HCNN',  # type of NN for each column network. HCNN/CNN
         '-batch': 5,  # batch size for mini-batch version.
         '-nlayers': 10,  # number of layers in each highway network.
@@ -30,12 +31,16 @@ def process_input_args(argv):
         '-reg': 'dr',  # indicator: dr: dropout. nothing: no dropout.
         '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
         '-seed': 1234,  # used to make random decisions repeat.
-        '-flatmethod': 'c'  # 'c' -CNN. 'f' - Flat. else - No Flat.
+        '-flatmethod': 'c',  # 'c' -CNN. 'f' - Flat. else - No Flat.
     }
     # Update args to contain the user's desired configuration.
     while i < len(argv) - 1:
         arg_dict[argv[i]] = argv[i + 1]
         i += 2
+    # set log file name as data type, if not specified otherwise
+    if arg_dict['-saving'] is None:
+        arg_dict['-saving'] = arg_dict['-data']
+
     # Update data types for arguments.
     arg_dict['-nlayers'] = int(arg_dict['-nlayers'])
     arg_dict['-dim'] = int(arg_dict['-dim'])
@@ -53,6 +58,7 @@ def get_global_configuration(argv):
     :return: many variables to be used as globals in main.
     """
     logging.debug("get_global_configuration - Started.")
+    now = time.strftime('%Y-%m-%d_%H-%M-%S')
     args = process_input_args(argv)
     seed = args['-seed']
     numpy.random.seed(seed)
@@ -64,7 +70,8 @@ def get_global_configuration(argv):
     n_layers = args['-nlayers']
     dim = args['-dim']
     shared = args['-shared']
-    saving = args['-saving'] + '_' + args['-model']
+    saving = args['-saving'] + '_' + args['-model'] + '__' + now
+
     nmean = args['-nmean']
     batch_size = int(args['-batch'])
     fm = args['-flatmethod']
@@ -79,7 +86,6 @@ def get_global_configuration(argv):
     example_x = extract_featurs(paths, [0], task)
 
     labels = labels.astype('int64')
-
 
     # the number of classes is max+1 since the first class is 0.
     n_classes = numpy.max(labels) + 1

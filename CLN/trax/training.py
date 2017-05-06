@@ -17,7 +17,7 @@ dataset = task = n_layers = dim = shared = saving = nmean = batch_size = dropout
 paths = labels = batches = rel_list = rel_mask = None
 train_ids = valid_ids = test_ids = None
 f_result = f_params = None
-model = performence_evaluator = callbacks = None
+model = performance_evaluator = callbacks = None
 p = l = rl = rm = b = None
 train_gen = valid_gen = test_gen = None
 
@@ -77,15 +77,15 @@ def log_model():
 
 
 def get_information():
-    global performence_evaluator, callbacks
+    global performance_evaluator, callbacks
     logging.debug("get_information: - Started.")
-    performence_evaluator = Evaluator( file_result=f_result, file_params=f_params)
+    performance_evaluator = Evaluator(file_result=f_result, file_params=f_params)
 
-    callbacks = [performence_evaluator, NanStopping()]
+    callbacks = [performance_evaluator, NanStopping()]
     # callbacks = None
     logging.debug("get_information: - Ended.")
     stop_and_read(run_mode)
-    return performence_evaluator, callbacks
+    return performance_evaluator, callbacks
 
 
 def create_sub_samples():
@@ -93,7 +93,7 @@ def create_sub_samples():
     global train_ids, valid_ids, test_ids
     global p, l, rl, rm, b
 
-    def project(indexes, paths, labels, rel_list, rel_mask, batches, offset):
+    def project(indexes,offset, paths, labels, rel_list, rel_mask, batches):
         p = paths[indexes]
         l = labels[indexes]
         rl = rel_list[indexes]
@@ -107,19 +107,19 @@ def create_sub_samples():
 
     inp = [train_ids, valid_ids, test_ids]
     offsets = [0, len(train_ids), len(train_ids) + len(valid_ids)]
-    p = [None, None, None]
-    l = [None, None, None]
-    rl = [None, None, None]
-    rm = [None, None, None]
-    b = [None, None, None]
+    p = [None, None, None]   # paths
+    l = [None, None, None]   # labels
+    rl = [None, None, None]  # rel list
+    rm = [None, None, None]  # rel mask
+    b = [None, None, None]   # batches
     for i in range(len(inp)):
-        p[i], l[i], rl[i], rm[i], b[i] = project(inp[i], paths, labels, rel_list, rel_mask, batches, offsets[i])
+        p[i], l[i], rl[i], rm[i], b[i] = project(inp[i],offsets[i], paths, labels, rel_list, rel_mask, batches)
 
 
-class SampleGenerator():
+class SampleGenerator:
     def __init__(self, sample_index, sample_name):
-        logging.debug("SampleGenerator: constructor: Started. designed for sample index %d called: %s." % (
-        sample_index, sample_name))
+        logging.debug("SampleGenerator: constructor: Started. designed for sample index %d called: %s." %
+                      (sample_index, sample_name))
         self.curr_batch = 0
         self.si = sample_index
         self.name = sample_name
@@ -130,10 +130,12 @@ class SampleGenerator():
         self.n_samples = len(b[self.si])
         logging.debug("SampleGenerator: constructor: Ended")
 
-
-
     def prepera_data(self, ids, p, l, rl, rm):
-        sx = [read_from_disk(ppp) for ppp in p[ids]]
+        # sx = samples_x
+        # sy = samples y
+        # srm = samples relation mask
+        # srl = samples relation list
+        sx = [read_from_disk(path) for path in p[ids]]
         sy = l[ids]
         srm = rm[ids]
         srl = rl[ids]
@@ -146,16 +148,16 @@ class SampleGenerator():
         return sx, sy, srl, srm
 
     def data_generator(self):
-        logging.debug("SampleGenerator: %s has been started."%self.name)
-        # i and bc are used for constant batch sizes.
-        # it is much faster than chaning batch size.
-        i=0
-        bc = 128
+        logging.debug("SampleGenerator: %s has been started." % self.name)
+        # i and bs are used for constant batch sizes.
+        # it is much faster than changing batch size.
+        i = 0
+        bs = 128
         while True:
             # ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
-            ids = range(i,np.minimum(i+bc,self.n_samples))
-            i += bc
-            if i>self.n_samples: i=0
+            ids = range(i, np.minimum(i+bs, self.n_samples))
+            i += bs
+            if i > self.n_samples: i = 0
             sx, sy, srl, srm = self.prepera_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
             self.curr_batch += 1
             self.curr_batch %= self.max_batches
@@ -163,7 +165,7 @@ class SampleGenerator():
                 inp = [sx]
             else:
                 inp = [sx, srl, srm]
-            yield inp,sy
+            yield inp, sy
 
     def get_ytrue(self):
         return l[self.si]
@@ -174,14 +176,14 @@ def main_cln():
     global paths, labels, batches, rel_list, rel_mask
     global train_ids, valid_ids, test_ids
     global f_result, f_params
-    global model, performence_evaluator, callbacks
+    global model, performance_evaluator, callbacks
     global p, l, rl, rm, b
     global train_gen, valid_gen, test_gen
 
     # calculates variables for execution.
     dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
-    selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-    paths, batches, fm = get_global_configuration(sys.argv)
+        selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
+        paths, batches, fm = get_global_configuration(sys.argv)
 
     # build a keras model to be trained.
     build_model()
@@ -201,11 +203,10 @@ def main_cln():
     test_gen = SampleGenerator(sample_index=2, sample_name='test')
 
     # performence_evaluator.train_gen = train_gen
-    # performence_evaluator.valid_gen = valid_gen
-    performence_evaluator.test_gen = test_gen
+    performance_evaluator.valid_gen = valid_gen
+    performance_evaluator.test_gen = test_gen
 
     # callbacks = None
-
 
     model.fit_generator(train_gen.data_generator(), samples_per_epoch=train_gen.n_samples, nb_epoch=number_of_epochs,
                         verbose=1, callbacks=callbacks,
