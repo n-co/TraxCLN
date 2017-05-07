@@ -18,8 +18,8 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)
 logging.info("Logger is up and running!")
 
-product_width = 200
-product_height = 600
+product_width = 100
+product_height = 300
 product_channels = 3
 product_shape = (product_height, product_width, product_channels)
 product_wh = (product_width, product_height)

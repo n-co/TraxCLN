@@ -46,3 +46,16 @@ running trax folder
 
 
 screen commands
+
+
+nohup command:
+    similar to screen, runs a program even when you close the session
+    nohup <command> <arguments>  >  log.txt &
+    > log.txt  -  writes the output to a file
+    &          - runs in background
+
+tail command:
+    shows last lines of a file
+    tail -n 15 -f log.txt
+    -n <number> - takes the last <number> lines of the file (default is 10)
+    -f          - continue to print more lines when file is still being writen

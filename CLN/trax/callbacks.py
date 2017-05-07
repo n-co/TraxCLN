@@ -1,5 +1,6 @@
 from config import *
 import numpy
+import datetime as dt
 # from theano import tensor
 import tensorflow as tensor
 from keras.callbacks import *
@@ -68,7 +69,8 @@ class Evaluator(Callback):
             metrics_ans.append(res)
 
         f = open(self.log_file_path, 'a')
-        f.write("\n%s:" % (self.n_epoch))
+        now = dt.datetime.now().replace(microsecond=0)
+        f.write("\n%s %4s:" % (now, self.n_epoch))
         for i in range(len(gens)):
             f.write("%s--" % metrics_ans[i])
         f.close()

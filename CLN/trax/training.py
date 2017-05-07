@@ -3,6 +3,7 @@ import random
 import numpy
 import sys
 import time
+import datetime as dt
 from prepare_data import *
 from create_model import *
 from callbacks import *
@@ -93,7 +94,7 @@ def create_sub_samples():
     global train_ids, valid_ids, test_ids
     global p, l, rl, rm, b
 
-    def project(indexes,offset, paths, labels, rel_list, rel_mask, batches):
+    def project(indexes, offset, paths, labels, rel_list, rel_mask, batches):
         p = paths[indexes]
         l = labels[indexes]
         rl = rel_list[indexes]
@@ -130,7 +131,7 @@ class SampleGenerator:
         self.n_samples = len(b[self.si])
         logging.debug("SampleGenerator: constructor: Ended")
 
-    def prepera_data(self, ids, p, l, rl, rm):
+    def prepare_data(self, ids, p, l, rl, rm):
         # sx = samples_x
         # sy = samples y
         # srm = samples relation mask
@@ -158,7 +159,7 @@ class SampleGenerator:
             ids = range(i, np.minimum(i+bs, self.n_samples))
             i += bs
             if i > self.n_samples: i = 0
-            sx, sy, srl, srm = self.prepera_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
+            sx, sy, srl, srm = self.prepare_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
             self.curr_batch += 1
             self.curr_batch %= self.max_batches
             if model_type == 'CNN':
@@ -179,6 +180,9 @@ def main_cln():
     global model, performance_evaluator, callbacks
     global p, l, rl, rm, b
     global train_gen, valid_gen, test_gen
+
+    start_time = dt.datetime.now().replace(microsecond=0)
+    print 'start time:    %s' % start_time
 
     # calculates variables for execution.
     dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
@@ -213,6 +217,13 @@ def main_cln():
                         validation_data=valid_gen.data_generator(), nb_val_samples=valid_gen.n_samples,
                         class_weight=None, max_q_size=10, nb_worker=1,
                         pickle_safe=False, initial_epoch=0, )
+
+    end_time = dt.datetime.now().replace(microsecond=0)
+
+    print 'start time:    %s' % start_time
+    print 'end time:      %s' % end_time
+    print 'total runtime: %s      %s' % (end_time - start_time)
+
     logging.debug('PRECLN: ended.')
 
 main_cln()

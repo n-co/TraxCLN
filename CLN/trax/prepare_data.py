@@ -20,7 +20,7 @@ def process_input_args(argv):
     i = 1
     # set default args.
     arg_dict = {
-        '-data': 'trax_100_300',  # chosing the learning data set: trax of different sizes.
+        '-data': 'trax_100_300_products',  # chosing the learning data set: trax of different sizes.
         '-saving': None,  # log file name. default is as data
         '-model': 'HCNN',  # type of NN for each column network. HCNN/CNN
         '-batch': 5,  # batch size for mini-batch version.

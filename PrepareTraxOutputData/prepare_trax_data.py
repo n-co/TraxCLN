@@ -39,7 +39,7 @@ def format_ids_feats_labels_rel_list(probes):
         probe = probes[probe_id]
         for product in probe.products:
             product.relations = np.array(product.relations)
-            labels[product.id] = product.brand_label  #TODO: make sure this is product_label and not batch_label
+            labels[product.id] = product.product_label  # TODO: make sure this is product_label and not batch_label
             # feats[product.id] = product.features
             paths[product.id] = str(products_dir + product.patch_url)
             rel_list[product.id] = product.relations
