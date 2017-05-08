@@ -14,13 +14,14 @@ from random import  randint
 
 
 # GLOBAL VARIABLES
-dataset = task = n_layers = dim = shared = saving = nmean = batch_size = dropout = example_x = n_classes  = selected_optimizer = fm = model_type = None
+dataset = task = n_layers = dim = shared = saving = nmean = batch_size = dropout = example_x = n_classes = selected_optimizer = fm = model_type = None
 paths = labels = batches = rel_list = rel_mask = None
 train_ids = valid_ids = test_ids = None
 f_result = f_params = None
 model = performance_evaluator = callbacks = None
 p = l = rl = rm = b = None
 train_gen = valid_gen = test_gen = None
+time_stamp = None
 
 
 def build_model():
@@ -65,12 +66,20 @@ def log_model():
     f_params = best_models_path + saving + '.hdf5'
 
     # Create a log.
-    f_result = logs_path + saving + '.txt'
+    time_str = time_stamp.strftime("%Y-%m-%d_%H-%M-%S")
+    f_result = logs_path + saving + '__' + time_str + '.txt'
     f = open(f_result, 'w')
     f.write('Training log:\n')
     f.write('information structure:\n')
-    mn =str(model.metrics_names)
-    f.write("epoch_id: train: %s---valid: %s---test: %s\n" %(mn,mn,mn))
+    # mn = str(model.metrics_names)
+    mn = ''
+    for name in model.metrics_names:
+        mn += '%-22s' % name
+    f.write("time            epoch_id: ")
+    # f.write("train: %s" % mn)
+    f.write("valid: %s" % mn)
+    f.write("test:  %s" % mn)
+    f.write("\n")
     f.close()
     logging.debug("log_model: - Ended.")
     stop_and_read(run_mode)
@@ -180,8 +189,9 @@ def main_cln():
     global model, performance_evaluator, callbacks
     global p, l, rl, rm, b
     global train_gen, valid_gen, test_gen
+    global time_stamp
 
-    start_time = dt.datetime.now().replace(microsecond=0)
+    time_stamp = start_time = dt.datetime.now().replace(microsecond=0)
     print 'start time:    %s' % start_time
 
     # calculates variables for execution.
@@ -222,7 +232,7 @@ def main_cln():
 
     print 'start time:    %s' % start_time
     print 'end time:      %s' % end_time
-    print 'total runtime: %s      %s' % (end_time - start_time)
+    print 'total runtime: %s' % (end_time - start_time)
 
     logging.debug('PRECLN: ended.')
 

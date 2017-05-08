@@ -70,9 +70,13 @@ class Evaluator(Callback):
 
         f = open(self.log_file_path, 'a')
         now = dt.datetime.now().replace(microsecond=0)
-        f.write("\n%s %4s:" % (now, self.n_epoch))
+        f.write("\n%s %4s: " % (now, self.n_epoch))
         for i in range(len(gens)):
-            f.write("%s--" % metrics_ans[i])
+            f.write('       ')
+            for ans in metrics_ans[i]:
+                # 18 digits after decimal point, and room for at least 22 chars ==> '0.234567890123456789  '
+                f.write('%-22.18f' % ans)
+            # f.write("%s--" % metrics_ans[i])
         f.close()
 
         f1 = metrics_ans[0][2]  # TODO: make sure we learn from f1 of valid

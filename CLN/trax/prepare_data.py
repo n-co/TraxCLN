@@ -58,7 +58,6 @@ def get_global_configuration(argv):
     :return: many variables to be used as globals in main.
     """
     logging.debug("get_global_configuration - Started.")
-    now = time.strftime('%Y-%m-%d_%H-%M-%S')
     args = process_input_args(argv)
     seed = args['-seed']
     numpy.random.seed(seed)
@@ -70,7 +69,7 @@ def get_global_configuration(argv):
     n_layers = args['-nlayers']
     dim = args['-dim']
     shared = args['-shared']
-    saving = args['-saving'] + '_' + args['-model'] + '__' + now
+    saving = args['-saving'] + '_' + args['-model']
 
     nmean = args['-nmean']
     batch_size = int(args['-batch'])
