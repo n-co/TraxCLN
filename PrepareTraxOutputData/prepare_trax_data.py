@@ -117,15 +117,26 @@ def import_data():
         lines = itertools.islice(f, 1, None)
         reader = csv.reader(lines)
         csv_length = 0
-        i=0
+        i = 0
         for row in reader:
             csv_length += 1
             # sample_type = row[2]
             probe_id = row[9]
             sample_type = get_sample_type(probe_id)
-            #TODO: remove sample type col fromsource csv file
-            product = Product(row[0], row[1], sample_type, row[3], row[4], row[5], row[6], row[7], row[8], row[9],
-                              row[10], row[11], probes[row[9]])
+            # TODO: remove sample type col fromsource csv file
+            product = Product(id=row[0],
+                              brand_code=row[1],
+                              sample_type=sample_type,
+                              brand_label=row[3],
+                              form_factor_label=row[4],
+                              mask=row[5],
+                              object_label=row[6],
+                              patch_id=row[7],
+                              patch_url=row[8],
+                              probe_id=row[9],
+                              product_label=row[10],
+                              voting_confidence=row[11],
+                              probe_obj=probes[row[9]])
             product.index_in_probe = len(probes[product.probe_id].products)
             probes[product.probe_id].products = np.append(probes[product.probe_id].products, product)
             sample_types[product.sample_type] = np.append(sample_types[product.sample_type], product.id)
@@ -147,7 +158,7 @@ def prepare_trax_data():
     # for id in probes:
     #     logging.debug("%s: %d", id, len(probes[id].shelves))
     #     logging.debug(str(map(lambda sh: map(lambda pr: pr.id, sh), probes[id].shelves)))
-    logging.debug("length of train: %d valid: %d test: %d " % (len(train_ids),len(valid_ids),len(test_ids)))
+    logging.debug("length of train: %d valid: %d test: %d " % (len(train_ids), len(valid_ids), len(test_ids)))
     logging.debug("number of different labels: %d" % np.max(labels))
     logging.debug("train labels:")
     logging.debug(str(np.bincount(labels[train_ids])))

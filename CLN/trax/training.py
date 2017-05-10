@@ -86,6 +86,15 @@ def log_model():
     return f_result, f_params
 
 
+def log_summary(start_time, end_time):
+    f = open(f_result, 'w')
+    f.write('\n\n')
+    f.write('start time:    %s\n' % start_time)
+    f.write('end time:      %s\n' % end_time)
+    f.write('total runtime: %s\n' % (end_time - start_time))
+    f.close()
+
+
 def get_information():
     global performance_evaluator, callbacks
     logging.debug("get_information: - Started.")
@@ -229,6 +238,8 @@ def main_cln():
                         pickle_safe=False, initial_epoch=0, )
 
     end_time = dt.datetime.now().replace(microsecond=0)
+
+    log_summary(start_time, end_time)
 
     print 'start time:    %s' % start_time
     print 'end time:      %s' % end_time

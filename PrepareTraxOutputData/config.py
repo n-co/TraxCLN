@@ -42,9 +42,9 @@ csv_length_limit = 50615  # 290000
 first_valid_index = 50013  # 289400  # TODO: make sure these values start at the begining of a probe.
 first_test_index = 50322  # 289700
 
-probes_for_train = 120000  # 240000  # products
-probes_for_valid = 1500  # 30000  # products
-probes_for_test = 1500  # 30000  # products
+probes_for_train = 12000  # 240000  # products
+probes_for_valid = 2000  # 40000  # products
+probes_for_test = 2000  # 40000  # products
 
 eps = 200  # max distance (in pixels) between adjacent products
 
@@ -68,7 +68,7 @@ prev_probe_id = None
 
 
 def get_sample_type(probe_id):
-    global train_counter,valid_counter, test_counter,last_sample_type,prev_probe_id
+    global train_counter, valid_counter, test_counter, last_sample_type, prev_probe_id
     if probe_id == prev_probe_id:
         return last_sample_type
     if train_counter < probes_for_train:
