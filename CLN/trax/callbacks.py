@@ -79,7 +79,7 @@ class Evaluator(Callback):
             # f.write("%s--" % metrics_ans[i])
         f.close()
 
-        f1 = metrics_ans[1][2]  # TODO: make sure we learn from f1 of valid
+        f1 = metrics_ans[0][2]  # TODO: make sure we learn from f1 of valid
         if f1 > self.bestResult:
             logging.info("Evaluator: on_epoch_end: best result imporoved! saving weights!")
             self.bestResult = f1

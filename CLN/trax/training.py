@@ -227,7 +227,7 @@ def main_cln():
     valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
     test_gen = SampleGenerator(sample_index=2, sample_name='test')
 
-    performance_evaluator.train_gen = train_gen
+    # performance_evaluator.train_gen = train_gen
     performance_evaluator.valid_gen = valid_gen
     performance_evaluator.test_gen = test_gen
 
