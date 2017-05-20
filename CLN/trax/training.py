@@ -76,7 +76,7 @@ def log_model():
     for name in model.metrics_names:
         mn += '%-22s' % name
     f.write("time            epoch_id: ")
-    # f.write("train: %s" % mn)
+    f.write("train: %s" % mn)
     f.write("valid: %s" % mn)
     f.write("test:  %s" % mn)
     f.write("\n")
@@ -87,12 +87,14 @@ def log_model():
 
 
 def log_summary(start_time, end_time):
-    f = open(f_result, 'w')
+    logging.debug("log_summary: - Started.")
+    f = open(f_result, 'a')
     f.write('\n\n')
     f.write('start time:    %s\n' % start_time)
     f.write('end time:      %s\n' % end_time)
     f.write('total runtime: %s\n' % (end_time - start_time))
     f.close()
+    logging.debug("log_summary: - Ended.")
 
 
 def get_information():
@@ -225,7 +227,7 @@ def main_cln():
     valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
     test_gen = SampleGenerator(sample_index=2, sample_name='test')
 
-    # performence_evaluator.train_gen = train_gen
+    performance_evaluator.train_gen = train_gen
     performance_evaluator.valid_gen = valid_gen
     performance_evaluator.test_gen = test_gen
 

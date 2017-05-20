@@ -1,0 +1,4 @@
+Training log:
+epoch	loss	v_loss	|	tr_maf1	tr_f1	tr_pre	tr_rec	|	v_auc	v_f1	v_pre	v_rec	|	t_maf1	t_f1	t_pre	t_rec
+0	1.0999	1.0869	|	0.2805	0.4458	0.4458	0.4458	|	0.2725	0.4416	0.4416	0.4416	|	0.2726	0.4399	0.4399	0.4399	|  Best result at epoch 0
+1	1.0869	1.0827	|	0.4005	0.5385	0.5385	0.5385	|	0.4020	0.5402	0.5402	0.5402	|	0.4019	0.5400	0.5400	0.5400	|  Best result at epoch 1
