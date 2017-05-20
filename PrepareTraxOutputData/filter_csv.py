@@ -2,7 +2,7 @@ from config import *
 import operator
 
 filter_limit = 1000
-filtered_csv_path = raw_data_dir + 'data_filtered.csv'
+filtered_csv_path = raw_data_dir + '/data_filtered.csv'
 
 
 def count_labels(csv_path):
@@ -78,17 +78,25 @@ def create_filtered_csv(original_csv_path, new_csv_path, limit_filter, labels_di
         with open(new_csv_path, 'w') as filtered:
             writer = csv.writer(filtered)
             writer.writerow(field_names)
+            i = 0
+            row_id = 0
             for row in reader:
                 label = row[10]
                 if labels_dictionary[label] >= limit_filter:
+                    row[0] = str(row_id)
                     writer.writerow(row)
+                    row_id += 1
+                if i % 50000 == 0:
+                    logging.debug("index now at: %d" % i)
+                i += 1
 
     logging.info("create_filtered_csv: Ended.")
 
 labels_dict = count_labels(csv_path)
-# print_dict(labels_dict)
+print_dict(labels_dict)
 # limits = [1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 # for limit in limits:
 #     labels, products = count_above_limit(labels_dict, limit)
 #     print 'limit = %4d   relevant labels = %4d   relevant products = %6d' % (limit, labels, products)
+
 create_filtered_csv(csv_path, filtered_csv_path, filter_limit, labels_dict)

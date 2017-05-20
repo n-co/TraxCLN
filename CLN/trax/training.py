@@ -22,6 +22,7 @@ model = performance_evaluator = callbacks = None
 p = l = rl = rm = b = None
 train_gen = valid_gen = test_gen = None
 time_stamp = None
+arg_dict = {}
 
 
 def build_model():
@@ -69,14 +70,18 @@ def log_model():
     time_str = time_stamp.strftime("%Y-%m-%d_%H-%M-%S")
     f_result = logs_path + saving + '__' + time_str + '.txt'
     f = open(f_result, 'w')
-    f.write('Training log:\n')
-    f.write('information structure:\n')
+    f.write('Training log:\n\n')
+
+    for key in arg_dict:
+        f.write('\t%-10s: %s\n' % (key, arg_dict[key]))
+
+    f.write('\ninformation structure:\n')
     # mn = str(model.metrics_names)
     mn = ''
     for name in model.metrics_names:
         mn += '%-22s' % name
     f.write("time            epoch_id: ")
-    f.write("train: %s" % mn)
+    # f.write("train: %s" % mn)
     f.write("valid: %s" % mn)
     f.write("test:  %s" % mn)
     f.write("\n")
@@ -201,6 +206,7 @@ def main_cln():
     global p, l, rl, rm, b
     global train_gen, valid_gen, test_gen
     global time_stamp
+    global arg_dict
 
     time_stamp = start_time = dt.datetime.now().replace(microsecond=0)
     print 'start time:    %s' % start_time
@@ -208,7 +214,7 @@ def main_cln():
     # calculates variables for execution.
     dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
         selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, batches, fm = get_global_configuration(sys.argv)
+        paths, batches, fm, arg_dict = get_global_configuration(sys.argv)
 
     # build a keras model to be trained.
     build_model()

@@ -20,7 +20,7 @@ def process_input_args(argv):
     i = 1
     # set default args.
     arg_dict = {
-        '-data': 'trax_100_300_products',  # chosing the learning data set: trax of different sizes.
+        '-data': 'trax_100_300_filtered',  # chosing the learning data set: trax of different sizes.
         '-saving': None,  # log file name. default is as data
         '-model': 'HCNN',  # type of NN for each column network. HCNN/CNN
         '-batch': 5,  # batch size for mini-batch version.
@@ -104,7 +104,7 @@ def get_global_configuration(argv):
     stop_and_read(run_mode)
     return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
            selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-           paths, batches, fm
+           paths, batches, fm, args
 
 
 
