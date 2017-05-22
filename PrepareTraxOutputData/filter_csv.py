@@ -2,6 +2,7 @@ from config import *
 import operator
 
 filter_limit = 1000
+original_csv_path = raw_data_dir + '/data_full.csv'
 filtered_csv_path = raw_data_dir + '/data_filtered.csv'
 
 
@@ -11,7 +12,7 @@ def count_labels(csv_path):
     :param csv_path: path to a csv file.
     :return: a dictionary with key=label, value=label_count
     """
-    logging.info("labels_counter: Started.")
+    logging.info("count_labels: Started.")
     labels_dict = {}
     with open(csv_path, 'r') as f:
         lines = itertools.islice(f, 1, None)  # ignore header line
@@ -27,8 +28,60 @@ def count_labels(csv_path):
             if i % 50000 == 0:
                 logging.debug("index now at: %d" % i)
             i += 1
-    logging.info("labels_counter: Ended.")
+    logging.info("count_labels: Ended.")
     return labels_dict
+
+
+def count_probes(csv_path, labels_dict, limit_filter):
+    """
+    according to a trax formatted csv file, count instances of each label
+    :param csv_path: path to a csv file.
+    :param labels_dict:
+    :param limit_filter:
+    :return: a dictionary with key=probe_id, value=products_in_probe
+    """
+    logging.info("count_probes: Started.")
+    probes_dict = {}
+    with open(csv_path, 'r') as f:
+        lines = itertools.islice(f, 1, None)  # ignore header line
+        reader = csv.reader(lines)
+        i = 0
+        for row in reader:
+            probe_id = row[9]
+            label = row[10]
+            if labels_dict[label] >= limit_filter:
+                # probes_dict[probe_id] = 1
+                if probe_id in probes_dict:
+                    probes_dict[probe_id] += 1
+                else:
+                    probes_dict[probe_id] = 1
+
+            if i % 50000 == 0:
+                logging.debug("index now at: %d" % i)
+            i += 1
+    logging.info("count_probes: Ended.")
+    return probes_dict
+
+
+def count_probes_form_csv(csv_path):
+    logging.info("count_probes_form_csv: Started.")
+    with open(csv_path, 'r') as f:
+        lines = itertools.islice(f, 1, None)  # ignore header line
+        reader = csv.reader(lines)
+        i = 0
+        counter = 0
+        prev = '0'
+        for row in reader:
+            probe_id = row[9]
+            if prev != probe_id:
+                counter += 1
+                prev = probe_id
+
+            if i % 50000 == 0:
+                logging.debug("index now at: %d" % i)
+            i += 1
+    logging.info("count_probes_form_csv: Ended.")
+    return counter
 
 
 def print_dict(dictionary):
@@ -92,11 +145,12 @@ def create_filtered_csv(original_csv_path, new_csv_path, limit_filter, labels_di
 
     logging.info("create_filtered_csv: Ended.")
 
-labels_dict = count_labels(csv_path)
+labels_dict = count_labels(original_csv_path)
 print_dict(labels_dict)
-# limits = [1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-# for limit in limits:
-#     labels, products = count_above_limit(labels_dict, limit)
-#     print 'limit = %4d   relevant labels = %4d   relevant products = %6d' % (limit, labels, products)
+limits = [1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+for limit in limits:
+    labels, products = count_above_limit(labels_dict, limit)
+    print 'limit = %4d   labels = %3d   products = %6d' % (limit, labels, products)
 
-create_filtered_csv(csv_path, filtered_csv_path, filter_limit, labels_dict)
+print len(count_probes(original_csv_path, labels_dict, 1000))
+# create_filtered_csv(csv_path, filtered_csv_path, filter_limit, labels_dict)
