@@ -1,3 +1,5 @@
+from statsmodels.graphics.tests.test_functional import test_fboxplot_rainbowplot
+
 from config import *
 import random
 import numpy
@@ -19,7 +21,7 @@ paths = labels = batches = rel_list = rel_mask = None
 train_ids = valid_ids = test_ids = None
 f_result = f_params = None
 model = performance_evaluator = callbacks = None
-p = l = rl = rm = b = None
+p = l = rl = rm = b = nested = None
 train_gen = valid_gen = test_gen = None
 time_stamp = None
 arg_dict = {}
@@ -42,7 +44,7 @@ def build_model():
     # Let's train the model using RMSprop
     model.compile(loss='categorical_crossentropy',
                   optimizer=selected_optimizer,
-                  metrics=['accuracy','fscore','precision','recall'])
+                  metrics=['accuracy', 'fscore', 'precision', 'recall'])
 
     logging.debug("build_model: - Ended")
 
@@ -118,6 +120,7 @@ def create_sub_samples():
     global paths, labels, rel_list, batches
     global train_ids, valid_ids, test_ids
     global p, l, rl, rm, b
+    global nested
 
     def project(indexes, offset, paths, labels, rel_list, rel_mask, batches):
         p = paths[indexes]
@@ -131,7 +134,37 @@ def create_sub_samples():
 
         return p, l, rl, rm, b
 
+    def create_nested_ids(ids):
+        """
+        creating a nested np array of product_ids, first dimension for a probe, second dimension is the product id
+        :return: the nested array
+        """
+        logging.debug("create_nested_ids: - Started.")
+        probes_offset = batches[ids[0]]
+        products_offset = ids[0]
+        num_of_probes = batches[ids[-1]] - probes_offset + 1
+        nested_ids = np.empty((num_of_probes,), dtype=np.ndarray)
+
+        products_list = []
+        prev_probe_id = batches[ids[0]]
+        for product_id in ids:
+            probe_id = batches[product_id]
+            if probe_id != prev_probe_id:
+                nested_ids[prev_probe_id - probes_offset] = np.array(products_list)
+                products_list = []
+                prev_probe_id = probe_id
+            products_list.append(product_id - products_offset)
+
+        # add last list
+        nested_ids[prev_probe_id - probes_offset] = np.array(products_list)
+
+        logging.debug("create_nested_ids: - Ended.")
+        return nested_ids
+
     inp = [train_ids, valid_ids, test_ids]
+    nested = [create_nested_ids(train_ids),
+              create_nested_ids(valid_ids),
+              create_nested_ids(test_ids)]
     offsets = [0, len(train_ids), len(train_ids) + len(valid_ids)]
     p = [None, None, None]   # paths
     l = [None, None, None]   # labels
@@ -139,7 +172,7 @@ def create_sub_samples():
     rm = [None, None, None]  # rel mask
     b = [None, None, None]   # batches
     for i in range(len(inp)):
-        p[i], l[i], rl[i], rm[i], b[i] = project(inp[i],offsets[i], paths, labels, rel_list, rel_mask, batches)
+        p[i], l[i], rl[i], rm[i], b[i] = project(inp[i], offsets[i], paths, labels, rel_list, rel_mask, batches)
 
 
 class SampleGenerator:
@@ -149,6 +182,8 @@ class SampleGenerator:
         self.curr_batch = 0
         self.si = sample_index
         self.name = sample_name
+        self.nested_ids_array = nested[self.si]
+        self.random_ids_gen = self.random_nested_ids_generator()
         self.train_ids_gen = MiniBatchIdsByProbeId(probe_serials=b[self.si], n_samples=len(b[self.si]),
                                                    number_of_probes=np.max(b[self.si]) + 1,
                                                    probes_per_batch=batch_size)
@@ -173,6 +208,14 @@ class SampleGenerator:
         srm = np.array(srm)
         return sx, sy, srl, srm
 
+    def random_nested_ids_generator(self):
+        while True:
+            random.shuffle(self.nested_ids_array)
+            for arr in self.nested_ids_array:
+                random.shuffle(arr)
+                for product_id in arr:
+                    yield product_id
+
     def data_generator(self):
         logging.debug("SampleGenerator: %s has been started." % self.name)
         # i and bs are used for constant batch sizes.
@@ -182,8 +225,7 @@ class SampleGenerator:
         while True:
             # ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
             ids = range(i, np.minimum(i+bs, self.n_samples))
-            i += bs
-            if i > self.n_samples: i = 0
+            # ids = [self.random_ids_gen.next() for j in range(i, np.minimum(i+bs, self.n_samples))]
             sx, sy, srl, srm = self.prepare_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
             self.curr_batch += 1
             self.curr_batch %= self.max_batches
@@ -192,9 +234,25 @@ class SampleGenerator:
             else:
                 inp = [sx, srl, srm]
             yield inp, sy
+            i += bs
+            if i > self.n_samples:
+                i = 0
+                # self.shuffle_all()
 
     def get_ytrue(self):
         return l[self.si]
+
+    # def shuffle_all(self):
+    #     return None
+
+
+# def random_nested_generator(nested_array):
+#     while True:
+#         random.shuffle(nested_array)
+#         for arr in nested_array:
+#             random.shuffle(arr)
+#             for product_id in arr:
+#                 yield product_id
 
 
 def main_cln():
@@ -225,7 +283,7 @@ def main_cln():
     # get generators and additional variables.
     get_information()
 
-    # devide data into sub samples
+    # divide data into sub samples
     create_sub_samples()
 
     logging.debug('PRECLN: started.')

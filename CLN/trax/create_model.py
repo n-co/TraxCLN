@@ -27,7 +27,7 @@ def flat_by_method(flat_method, input_image_nodes, hidden_dim):
 def flat_by_conv(image_input_nodes, hidden_dim):
     cnn_act = 'relu'
     nb_filer = 16
-    number_of_conv_structs = 2
+    number_of_conv_structs = 3  # TODO: it was 2 before global average pooling
     cnn_nodes = image_input_nodes
     # TODO: verify the order of args height and width
     cnn_nodes = Convolution2D(nb_filer, 3, 3, input_shape=(product_channels, product_height, product_width),
@@ -43,12 +43,13 @@ def flat_by_conv(image_input_nodes, hidden_dim):
         cnn_nodes = Convolution2D(nb_filer, 3, 3, activation=cnn_act, border_mode='same')(cnn_nodes)
         cnn_nodes = MaxPooling2D(pool_size=(2, 2))(cnn_nodes)
 
-    cnn_nodes = Flatten()(cnn_nodes)
+    cnn_nodes = GlobalAveragePooling2D()(cnn_nodes)
+    # cnn_nodes = Flatten()(cnn_nodes)
     cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
-    cnn_nodes = Dense(2048, activation='relu', W_constraint=maxnorm(3), name="dnscnn1")(cnn_nodes)
-    cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
+    # cnn_nodes = Dense(2048, activation='relu', W_constraint=maxnorm(3), name="dnscnn1")(cnn_nodes)
+    # cnn_nodes = Dropout(dropout_ration_cnn)(cnn_nodes)
 
-    cnn_nodes = Dense(hidden_dim, activation=cnn_act, name="dnscnn2")(cnn_nodes)
+    # cnn_nodes = Dense(hidden_dim, activation=cnn_act, name="dnscnn2")(cnn_nodes)
     return cnn_nodes
 
 
