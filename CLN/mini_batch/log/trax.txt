@@ -1,9 +1,0 @@
-Training log:
-information structure:
-e#: epoch_id
-	validation:
-		loss	val_los	|	v_auc	v_f1	v_pre	v_rec
-		v_auc	v_err
-	test:
-		t_auc	t_f1	t_pre	t_rec
-		t_acc	t_err

@@ -2,10 +2,8 @@ from keras.layers import Layer, InputSpec, merge
 from keras import regularizers, initializations, activations, constraints
 from keras import backend as KerasBackend
 import numpy as np
-import logging
-import sys
-sys.path.insert(0, '../../')
-from tools import *
+
+
 
 
 class GraphHighwayByRel(Layer):

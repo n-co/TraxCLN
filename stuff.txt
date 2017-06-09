@@ -1,3 +1,0 @@
-
-installation of keras on anaconda
-http://stackoverflow.com/questions/34097988/how-do-i-install-keras-and-theano-in-anaconda-python-2-7-on-windows

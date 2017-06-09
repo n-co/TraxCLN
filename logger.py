@@ -1,7 +1,9 @@
 import sys
 import logging
 
-
+def stop_and_read(run_mode):
+    if run_mode == 'debug':
+        raw_input("Type anything to continue. ")
 
 class _AnsiColorizer(object):
     """
@@ -68,9 +70,10 @@ class ColorHandler(logging.StreamHandler):
         color = msg_colors.get(record.levelno, "white")
         self.stream.write(fm, color)
 
+def updateLogger():
+    c = ColorHandler()
+    formatter = logging.Formatter('%(asctime)s | %(levelname)7s | %(message)s')
+    c.setFormatter(formatter)
+    logging.getLogger().addHandler(c)
 
-c = ColorHandler()
-formatter = logging.Formatter('%(asctime)s | %(levelname)7s | %(message)s')
-c.setFormatter(formatter)
-logging.getLogger().addHandler(c)
 
