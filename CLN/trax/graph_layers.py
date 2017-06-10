@@ -4,8 +4,6 @@ from keras import backend as KerasBackend
 import numpy as np
 
 
-
-
 class GraphHighwayByRel(Layer):
     def __init__(self, init='glorot_uniform', transform_bias=-2,
                  n_rel=5, mean=1,
@@ -33,7 +31,7 @@ class GraphHighwayByRel(Layer):
         self.input_dim = input_dim
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
-        del kwargs['rel_carry']  # TODO: find out what this parameter is.
+        del kwargs['rel_carry']
         super(GraphHighwayByRel, self).__init__(**kwargs)
 
     def build(self, input_shape):

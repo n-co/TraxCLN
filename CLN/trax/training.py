@@ -1,60 +1,57 @@
-from statsmodels.graphics.tests.test_functional import test_fboxplot_rainbowplot
-
 from config import *
-import random
-import numpy
-import sys
-import time
-import datetime as dt
+
 from prepare_data import *
 from create_model import *
 from callbacks import *
-from keras.optimizers import *
-from keras.objectives import *
-from keras.utils.visualize_util import plot as kplt
-from random import  randint
 
+from keras.utils.visualize_util import plot as kplt
+
+import datetime as dt
 
 # GLOBAL VARIABLES
-dataset = task = n_layers = dim = shared = saving = nmean = batch_size = dropout = example_x = n_classes = selected_optimizer = fm = model_type = None
-paths = labels = batches = rel_list = rel_mask = None
-train_ids = valid_ids = test_ids = None
-f_result = f_params = None
-model = performance_evaluator = callbacks = None
-p = l = rl = rm = b = nested = None
-train_gen = valid_gen = test_gen = None
-time_stamp = None
 arg_dict = {}
 
-
-def build_model():
+def build_model(paths,rel_list):
     logging.debug("build_model: - Started")
-    global model
-    model = None
+    model_type = arg_dict['-model_type']
+    dim = arg_dict['-dim']
+    n_classes = arg_dict['-n_classes']
+    nlayers = arg_dict['-nlayers']
+    dropout = arg_dict['-dropout']
+    fm = arg_dict['-flatmethod']
+    shared = arg_dict['-shared']
+    nmean = arg_dict['-nmean']
+    example_x = extract_featurs(paths, [0])
+
     if model_type == 'HCNN':
-        model = create_hcnn_relation(n_layers=n_layers, hidden_dim=dim, input_shape=example_x[0].shape,
+        model = create_hcnn_relation(n_layers=nlayers, hidden_dim=dim, input_shape=example_x[0].shape,
                                      n_rel=rel_list.shape[-2],
                                      n_neigh=rel_list.shape[-1], n_classes=n_classes, shared=shared, nmean=nmean,
-                                     dropout=dropout, flat_method=fm)
+                                     dropout=dropout, flat_method=fm, pooling=pooling)
     elif model_type == 'CNN':
-        model = create_cnn(input_shape=example_x[0].shape, n_classes=n_classes)
+        model = create_cnn(input_shape=example_x[0].shape, n_classes=n_classes, pooling=pooling)
 
+    all_optimizers = {
+        'RMS2': rmsprop(lr=0.0001, decay=1e-6),
+        'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
+        'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+    }
+    selected_optimizer = all_optimizers[arg_dict['-opt']]
 
     model.summary()
-    # Let's train the model using RMSprop
     model.compile(loss='categorical_crossentropy',
                   optimizer=selected_optimizer,
                   metrics=['accuracy', 'fscore', 'precision', 'recall'])
 
     logging.debug("build_model: - Ended")
-
-    stop_and_read(run_mode)
+    logger.stop_and_read(run_mode)
     return model
 
 
-def log_model():
-    global f_params, f_result
+def log_model(model,time_stamp):
     logging.debug("log_model: - Started.")
+    saving = arg_dict['-saving']
+
     # Log information so far.
     # Prints the model, in a json format, to the desired path.
     json_string = model.to_json()
@@ -78,22 +75,20 @@ def log_model():
         f.write('\t%-10s: %s\n' % (key, arg_dict[key]))
 
     f.write('\ninformation structure:\n')
-    # mn = str(model.metrics_names)
     mn = ''
     for name in model.metrics_names:
         mn += '%-22s' % name
     f.write("time            epoch_id: ")
-    # f.write("train: %s" % mn)
     f.write("valid: %s" % mn)
     f.write("test:  %s" % mn)
     f.write("\n")
     f.close()
     logging.debug("log_model: - Ended.")
-    stop_and_read(run_mode)
+    logger.stop_and_read(run_mode)
     return f_result, f_params
 
 
-def log_summary(start_time, end_time):
+def log_summary(f_result,start_time, end_time):
     logging.debug("log_summary: - Started.")
     f = open(f_result, 'a')
     f.write('\n\n')
@@ -104,24 +99,17 @@ def log_summary(start_time, end_time):
     logging.debug("log_summary: - Ended.")
 
 
-def get_information():
-    global performance_evaluator, callbacks
+def get_information(f_result,f_params):
     logging.debug("get_information: - Started.")
     performance_evaluator = Evaluator(file_result=f_result, file_params=f_params)
 
     callbacks = [performance_evaluator, NanStopping()]
-    # callbacks = None
     logging.debug("get_information: - Ended.")
-    stop_and_read(run_mode)
+    logger.stop_and_read(run_mode)
     return performance_evaluator, callbacks
 
 
-def create_sub_samples():
-    global paths, labels, rel_list, batches
-    global train_ids, valid_ids, test_ids
-    global p, l, rl, rm, b
-    global nested
-
+def create_sub_samples(paths,labels,batches,rel_list,rel_mask,train_ids,valid_ids,test_ids):
     def project(indexes, offset, paths, labels, rel_list, rel_mask, batches):
         p = paths[indexes]
         l = labels[indexes]
@@ -166,136 +154,47 @@ def create_sub_samples():
               create_nested_ids(valid_ids),
               create_nested_ids(test_ids)]
     offsets = [0, len(train_ids), len(train_ids) + len(valid_ids)]
-    p = [None, None, None]   # paths
-    l = [None, None, None]   # labels
+    p = [None, None, None]  # paths
+    l = [None, None, None]  # labels
     rl = [None, None, None]  # rel list
     rm = [None, None, None]  # rel mask
-    b = [None, None, None]   # batches
+    b = [None, None, None]  # batches
     for i in range(len(inp)):
         p[i], l[i], rl[i], rm[i], b[i] = project(inp[i], offsets[i], paths, labels, rel_list, rel_mask, batches)
 
-
-class SampleGenerator:
-    def __init__(self, sample_index, sample_name):
-        logging.debug("SampleGenerator: constructor: Started. designed for sample index %d called: %s." %
-                      (sample_index, sample_name))
-        self.curr_batch = 0
-        self.si = sample_index
-        self.name = sample_name
-        self.nested_ids_array = nested[self.si]
-        self.random_ids_gen = self.random_nested_ids_generator()
-        self.train_ids_gen = MiniBatchIdsByProbeId(probe_serials=b[self.si], n_samples=len(b[self.si]),
-                                                   number_of_probes=np.max(b[self.si]) + 1,
-                                                   probes_per_batch=batch_size)
-        self.max_batches = (np.max(b[self.si]) + 1) // batch_size
-        self.n_samples = len(b[self.si])
-        logging.debug("SampleGenerator: constructor: Ended")
-
-    def prepare_data(self, ids, p, l, rl, rm):
-        # sx = samples_x
-        # sy = samples y
-        # srm = samples relation mask
-        # srl = samples relation list
-        sx = [read_from_disk(path) for path in p[ids]]
-        sy = l[ids]
-        srm = rm[ids]
-        srl = rl[ids]
-        srl = np.subtract(srl, np.min(ids))
-        srl = np.maximum(srl, 0)
-        sx = np.array(sx)
-        sy = np.array(sy)
-        srl = np.array(srl)
-        srm = np.array(srm)
-        return sx, sy, srl, srm
-
-    def random_nested_ids_generator(self):
-        while True:
-            random.shuffle(self.nested_ids_array)
-            for arr in self.nested_ids_array:
-                random.shuffle(arr)
-                for product_id in arr:
-                    yield product_id
-
-    def data_generator(self):
-        logging.debug("SampleGenerator: %s has been started." % self.name)
-        # i and bs are used for constant batch sizes.
-        # it is much faster than changing batch size.
-        i = 0
-        bs = 128
-        while True:
-            # ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
-            ids = range(i, np.minimum(i+bs, self.n_samples))
-            # ids = [self.random_ids_gen.next() for j in range(i, np.minimum(i+bs, self.n_samples))]
-            sx, sy, srl, srm = self.prepare_data(ids, p[self.si], l[self.si], rl[self.si], rm[self.si])
-            self.curr_batch += 1
-            self.curr_batch %= self.max_batches
-            if model_type == 'CNN':
-                inp = [sx]
-            else:
-                inp = [sx, srl, srm]
-            yield inp, sy
-            i += bs
-            if i > self.n_samples:
-                i = 0
-                # self.shuffle_all()
-
-    def get_ytrue(self):
-        return l[self.si]
-
-    # def shuffle_all(self):
-    #     return None
+    return p, l, rl, rm, b, nested
 
 
-# def random_nested_generator(nested_array):
-#     while True:
-#         random.shuffle(nested_array)
-#         for arr in nested_array:
-#             random.shuffle(arr)
-#             for product_id in arr:
-#                 yield product_id
 
 
 def main_cln():
-    global dataset, task, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, loss, selected_optimizer, batch_type, fm, model_type
-    global paths, labels, batches, rel_list, rel_mask
-    global train_ids, valid_ids, test_ids
-    global f_result, f_params
-    global model, performance_evaluator, callbacks
-    global p, l, rl, rm, b
-    global train_gen, valid_gen, test_gen
-    global time_stamp
     global arg_dict
-
     time_stamp = start_time = dt.datetime.now().replace(microsecond=0)
-    print 'start time:    %s' % start_time
+    logging.info('main: started. start time:    %s' % start_time)
 
     # calculates variables for execution.
-    dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
-        selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-        paths, batches, fm, arg_dict = get_global_configuration(sys.argv)
+    arg_dict, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = get_global_configuration(
+        sys.argv)
 
     # build a keras model to be trained.
-    build_model()
+    model = build_model(paths,rel_list)
 
     # write information about model into log files.
-    log_model()
+    f_result, f_params = log_model(model, time_stamp)
 
     # get generators and additional variables.
-    get_information()
+    performance_evaluator, callbacks = get_information(f_result,f_params)
 
     # divide data into sub samples
-    create_sub_samples()
+    p, l, rl, rm, b, nested = create_sub_samples(paths,labels,batches,rel_list,rel_mask,train_ids,valid_ids,test_ids)
 
-    logging.debug('PRECLN: started.')
-    train_gen = SampleGenerator(sample_index=0, sample_name='train')
-    valid_gen = SampleGenerator(sample_index=1, sample_name='valid')
-    test_gen = SampleGenerator(sample_index=2, sample_name='test')
+    logging.debug('main: running network...')
+    train_gen = SampleGenerator(0,'train',arg_dict,p,l,rl,rm,b,nested)
+    valid_gen = SampleGenerator(1, 'valid',arg_dict,p,l,rl,rm,b,nested)
+    test_gen = SampleGenerator(2, 'test',arg_dict,p,l,rl,rm,b,nested)
 
-    # performance_evaluator.train_gen = train_gen
     performance_evaluator.valid_gen = valid_gen
     performance_evaluator.test_gen = test_gen
-
-    # callbacks = None
 
     model.fit_generator(train_gen.data_generator(), samples_per_epoch=train_gen.n_samples, nb_epoch=number_of_epochs,
                         verbose=1, callbacks=callbacks,
@@ -304,13 +203,13 @@ def main_cln():
                         pickle_safe=False, initial_epoch=0, )
 
     end_time = dt.datetime.now().replace(microsecond=0)
-
     log_summary(start_time, end_time)
+    logging.debug('main: training is complete.')
+    logging.info('main: start time:    %s' % start_time)
+    logging.info('main: end time:      %s' % end_time)
+    logging.info('main: total runtime: %s' % (end_time - start_time))
 
-    print 'start time:    %s' % start_time
-    print 'end time:      %s' % end_time
-    print 'total runtime: %s' % (end_time - start_time)
+    logging.debug('main: ended.')
 
-    logging.debug('PRECLN: ended.')
 
 main_cln()

@@ -1,13 +1,11 @@
 from config import *
-import gzip
-import cPickle
-import numpy
-from keras.optimizers import *
-from keras.objectives import *
-from keras.utils.np_utils import to_categorical
 import numpy as np
 import cv2 as ocv
-import time
+import gzip
+import cPickle
+import random
+from keras.optimizers import *
+from keras.utils.np_utils import to_categorical
 
 
 def process_input_args(argv):
@@ -17,36 +15,45 @@ def process_input_args(argv):
     :return: arg_dict: a json dictionary containing args in the desire.
     """
     logging.debug("process_input_args: Started.")
-    i = 1
     # set default args.
     arg_dict = {
-        '-data': 'trax_100_300_filtered',  # chosing the learning data set: trax of different sizes.
-        '-saving': None,  # log file name. default is as data
-        '-model': 'HCNN',  # type of NN for each column network. HCNN/CNN
-        '-batch': 5,  # batch size for mini-batch version.
-        '-nlayers': 10,  # number of layers in each highway network.
-        '-dim': 400,  # number of nodes in each layer of each coloumn network.
-        '-shared': 1,  # indicator. 1: parameters will be shared between coloumns. 0: no sharing.
-        '-nmean': 2,  # regulzation factor. shoule be 1<=nmean<=number_of_relations
-        '-reg': 'dr',  # indicator: dr: dropout. nothing: no dropout.
-        '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
-        '-seed': 1234,  # used to make random decisions repeat.
+        '-dataset': 'trax_100_300_filtered',  # chosing the learning data set.
+        '-model_type': 'CNN',  # type of NN for each column network. HCNN/CNN
+        '-batch_type': 'constant',  # constant/random/probe
+        '-batch_size': '5',  # batch size for mini-batch version.
+        '-constant_batch_size': '128',  # when selecting a constant batch size, this is the one.
+        '-nlayers': '10',  # number of layers in each highway network.
+        '-dim': '400',  # number of nodes in each layer of each coloumn network.
+        '-shared': '1',  # indicator. 1: parameters will be shared between coloumns. 0: no sharing.
+        '-nmean': '2',  # regulzation factor. shoule be 1<=nmean<=number_of_relations
+        '-dropout': '1',  # 1: use dropout. 0- dont.
         '-flatmethod': 'c',  # 'c' -CNN. 'f' - Flat. else - No Flat.
+        '-pooling': '0',  # 1 - use max pooling. 0 - dont use max pooling.
+        '-seed': '1234',  # used to make random decisions repeat.
+        '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
     }
     # Update args to contain the user's desired configuration.
+    i = 1
     while i < len(argv) - 1:
         arg_dict[argv[i]] = argv[i + 1]
         i += 2
-    # set log file name as data type, if not specified otherwise
-    if arg_dict['-saving'] is None:
-        arg_dict['-saving'] = arg_dict['-data']
 
-    # Update data types for arguments.
+
+    arg_dict['-saving'] = arg_dict['-dataset'] + '_' + arg_dict['-model_type'] + '_' + arg_dict['-flatmethod'] + '_' + arg_dict['-pooling']
+    arg_dict['-dataset']=data_sets_dir + arg_dict['-dataset'] + '.pkl.gz'
+    # model type
+    # batch type
+    arg_dict['-batch_size'] = int(arg_dict['-batch_size'])
+    arg_dict['-constant_batch_size'] = int(arg_dict['-constant_batch_size'])
     arg_dict['-nlayers'] = int(arg_dict['-nlayers'])
     arg_dict['-dim'] = int(arg_dict['-dim'])
     arg_dict['-shared'] = int(arg_dict['-shared'])
     arg_dict['-nmean'] = int(arg_dict['-nmean'])
+    arg_dict['-dropout'] = True if arg_dict['-dropout']=='1' else False
+    arg_dict['-pooling'] = True if arg_dict['-pooling'] == '1' else False
+    # flatmethod
     arg_dict['-seed'] = int(arg_dict['-seed'])
+    #opt
     logging.debug("process_input_args: Ended.")
     return arg_dict
 
@@ -54,58 +61,21 @@ def process_input_args(argv):
 def get_global_configuration(argv):
     """
 
-    :param argv: the command line args that were passed.
+    :param argv: the command line global_config that were passed.
     :return: many variables to be used as globals in main.
     """
     logging.debug("get_global_configuration - Started.")
-    args = process_input_args(argv)
-    seed = args['-seed']
-    numpy.random.seed(seed)
-    dataset = args['-data']
-    if 'trax' in dataset:
-        task = 'trax'
-    dataset = data_sets_dir + dataset + '.pkl.gz'
-    model_type = args['-model']
-    n_layers = args['-nlayers']
-    dim = args['-dim']
-    shared = args['-shared']
-    saving = args['-saving'] + '_' + args['-model']
 
-    nmean = args['-nmean']
-    batch_size = int(args['-batch'])
-    fm = args['-flatmethod']
+    global_config = process_input_args(argv)
+    np.random.seed(global_config['-seed'])
 
-    if 'dr' in args['-reg']:
-        dropout = True
-    else:
-        dropout = False
+    labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data(global_config['-dataset'])
 
-    labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data(dataset)
-
-    example_x = extract_featurs(paths, [0], task)
-
-    labels = labels.astype('int64')
-
-    # the number of classes is max+1 since the first class is 0.
-    n_classes = numpy.max(labels) + 1
-
-    labels = to_categorical(labels, n_classes)
-
-    # define the optimizer for weights finding.
-    all_optimizers = {
-        'RMS2': rmsprop(lr=0.0001, decay=1e-6),
-        'RMS': RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-8),
-        'Adam': Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
-    }
-    selected_optimizer = all_optimizers[args['-opt']]
-
+    global_config['-n_classes'] = np.max(labels) + 1
+    labels = to_categorical(labels, global_config['-n_classes'])
 
     logging.debug("get_global_configuration - Ended.")
-    stop_and_read(run_mode)
-    return dataset, task, model_type, n_layers, dim, shared, saving, nmean, batch_size, dropout, example_x, n_classes, \
-           selected_optimizer, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, \
-           paths, batches, fm, args
-
+    return global_config, labels, rel_list, rel_mask, train_ids, valid_ids, test_ids,paths, batches
 
 
 def load_data(path):
@@ -118,14 +88,14 @@ def load_data(path):
     logging.debug("load_data - Started.")
     f = gzip.open(path, 'rb')
     labels, rel_list, train_ids, valid_ids, test_ids, paths, batches = cPickle.load(f)
-    logging.info(str(paths))
+    logging.debug(str(paths))
     rel_list, rel_mask = create_mask_relation(rel_list)
+    labels = labels.astype('int64')
     logging.debug("load_data - Ended.")
     return labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches
 
 
 class MiniBatchIdsByProbeId:
-    # TODO: add suffel whenever a new epoch starts.
     def __init__(self, probe_serials, n_samples, number_of_probes, probes_per_batch):
         '''
         designed to handle a single Sample!(train/valid/test).
@@ -136,7 +106,8 @@ class MiniBatchIdsByProbeId:
         :param probes_per_batch:
         '''
         logging.debug("MiniBatchIdsByProbeId constructor")
-        logging.debug("can handle: probes: %d. products: %d. probes in batch: %d." %(n_samples,number_of_probes,probes_per_batch))
+        logging.debug("can handle: probes: %d. products: %d. probes in batch: %d." % (
+            n_samples, number_of_probes, probes_per_batch))
         # probes_arr = a numpy array of lists. each list will contain the ids of the products
         self.probes_arr = np.empty(number_of_probes, dtype=object)
         for i in xrange(number_of_probes):
@@ -145,7 +116,7 @@ class MiniBatchIdsByProbeId:
             self.probes_arr[probe_serials[i]].append(i)
 
         self.probes_per_batch = probes_per_batch
-        self.n_final_len = int(np.ceil(number_of_probes/probes_per_batch))
+        self.n_final_len = int(np.ceil(number_of_probes / probes_per_batch))
         self.build_final()
 
     def get_mini_batch_ids_internal(self, batch_id):
@@ -154,10 +125,6 @@ class MiniBatchIdsByProbeId:
         :param batch_id: the request batch_id.
         :return: the ids for this batch.
         """
-        # if batch_id == 0:
-        #     numpy.random.shuffle(self.probes_arr)
-        #     for i in xrange(len(self.probes_arr)):
-        #         numpy.random.shuffle(self.probes_arr[i])
 
         logging.debug("MiniBatchIdsByProbeId: get_mini_batch_ids: started.")
         product_ids = []
@@ -173,17 +140,18 @@ class MiniBatchIdsByProbeId:
         for i in range(self.n_final_len):
             self.final = self.final + [self.get_mini_batch_ids_internal(i).tolist()]
 
-    def get_mini_batch_ids(self,i):
+    def get_mini_batch_ids(self, i):
         return self.final[i]
 
 
-def read_from_disk( path):
+def read_from_disk(path):
     res = ocv.imread(path)
     res = res.astype('float32')
     res /= 255
     return res
 
-def extract_featurs(feats_paths, ids, task):
+
+def extract_featurs(feats_paths, ids):
     """
     :param feats_paths: paths to all products.
     :param ids: requested ids.
@@ -191,17 +159,12 @@ def extract_featurs(feats_paths, ids, task):
     :return: a tensor containing the feautures in desired format.
     """
     logging.debug("extract_featurs: Started.")
-    logging.debug("there are %d examples. batch size is %d. task is %s" % (len(feats_paths), len(ids), task))
+    logging.debug("there are %d examples. batch size is %d." % (len(feats_paths), len(ids)))
     feats = np.zeros((len(ids), product_width, product_height, product_channels), dtype=type(np.ndarray))
-    if task == 'trax':
-        for ii in range(len(ids)):
-            res = ocv.imread(feats_paths[ids[ii]])
-            res = res.astype('float32')
-            res /= 255
-            feats[ii] = res
-        ans = feats
-    else:
-        ans = feats_paths[ids]
+    for ii in range(len(ids)):
+        res = read_from_disk(feats_paths[ids[ii]])
+        feats[ii] = res
+    ans = feats
     logging.debug("extract_featurs: Ended.")
     return ans
 
@@ -217,24 +180,102 @@ def create_mask_relation(rel_list):
     n_rels = len(rel_list[0])
     max_neigh = 0
 
-    #go over all nodes, and all of their relation and find the largest relation.
+    # go over all nodes, and all of their relation and find the largest relation.
     for node in rel_list:
         for rel in node:
             max_neigh = max(max_neigh, len(rel))
 
-    #create arrays abel to handle the same amount of data, but for every relation it will hold the maximal amount
+    # create arrays abel to handle the same amount of data, but for every relation it will hold the maximal amount
     # needed.
-    rel = numpy.zeros((n_nodes, n_rels, max_neigh), dtype='int64')
-    mask = numpy.zeros((n_nodes, 2, n_rels, max_neigh), dtype='float32')
+    rel = np.zeros((n_nodes, n_rels, max_neigh), dtype='int64')
+    mask = np.zeros((n_nodes, 2, n_rels, max_neigh), dtype='float32')
 
-    for i, node in enumerate(rel_list): #go over source relation list.
-        for j, r in enumerate(node): # go over source relation.
+    for i, node in enumerate(rel_list):  # go over source relation list.
+        for j, r in enumerate(node):  # go over source relation.
             n = len(r)
             if n == 0:  # if the relation is empty
                 mask[i, 1, j, 0] = 1
             else:
-                rel[i, j, : n] = r   #copy the relation content.
+                rel[i, j, : n] = r  # copy the relation content.
                 mask[i, 0, j, : n] = 1.0
                 mask[i, 1, j, : n] = 1.0
     logging.debug("create_mask_relation: Ended.")
     return rel, mask
+
+class SampleGenerator:
+    def __init__(self, sample_index, sample_name,arg_dict,p, l, rl, rm, b, nested):
+        logging.debug("SampleGenerator: constructor: Started. designed for sample index %d called: %s." %
+                      (sample_index, sample_name))
+        self.arg_dict = arg_dict
+        self.p = p
+        self.l = l
+        self.rl = rl
+        self.rm = rm
+
+
+        self.curr_batch = 0
+        self.si = sample_index
+        self.name = sample_name
+        self.nested_ids_array = nested[self.si]
+        self.random_ids_gen = self.random_nested_ids_generator()
+        self.train_ids_gen = MiniBatchIdsByProbeId(probe_serials=b[self.si], n_samples=len(b[self.si]),
+                                                   number_of_probes=np.max(b[self.si]) + 1,
+                                                   probes_per_batch=arg_dict['-batch_size'])
+        self.max_batches = (np.max(b[self.si]) + 1) // arg_dict['-batch_size']
+        self.n_samples = len(b[self.si])
+        logging.debug("SampleGenerator: constructor: Ended")
+
+    def prepare_data(self, ids, p, l, rl, rm):
+        # sx = samples_x
+        # sy = samples y
+        # srm = samples relation mask
+        # srl = samples relation list
+        sx = [read_from_disk(path) for path in p[ids]]
+        sy = l[ids]
+        srm = rm[ids]
+        srl = rl[ids]
+        srl = np.subtract(srl, np.min(ids))
+        srl = np.maximum(srl, 0)
+        sx = np.array(sx)
+        sy = np.array(sy)
+        srl = np.array(srl)
+        srm = np.array(srm)
+        return sx, sy, srl, srm
+
+    def random_nested_ids_generator(self):
+        while True:
+            random.shuffle(self.nested_ids_array)
+            for arr in self.nested_ids_array:
+
+                random.shuffle(arr)
+                for product_id in arr:
+                    yield product_id
+
+    def data_generator(self):
+        logging.info("SampleGenerator: %s has been started." % self.name)
+        i = 0
+        while True:
+            if self.arg_dict['-batch_type'] == 'constant':
+                ids = range(i, np.minimum(i + self.arg_dict['-constant_batch_size'], self.n_samples))
+            elif self.arg_dict['-batch_type'] == 'random':
+                ids = [self.random_ids_gen.next() for j in
+                       range(i, np.minimum(i + self.arg_dict['-constant_batch_size'], self.n_samples))]
+            elif self.arg_dict['-batch_type'] == 'probe':
+                ids = self.train_ids_gen.get_mini_batch_ids(self.curr_batch)
+
+            sx, sy, srl, srm = self.prepare_data(ids, self.p[self.si], self.l[self.si], self.rl[self.si], self.rm[self.si])
+            self.curr_batch += 1
+            self.curr_batch %= self.max_batches
+            if self.arg_dict['-model_type'] == 'CNN':
+                inp = [sx]
+            else:
+                inp = [sx, srl, srm]
+            yield inp, sy
+            i += self.arg_dict['-constant_batch_size']
+            if i > self.n_samples:
+                i = 0
+
+    def get_ytrue(self):
+        return self.l[self.si]
+
+

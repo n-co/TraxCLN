@@ -14,14 +14,14 @@ product_channels = 3
 product_shape = (product_height, product_width, product_channels)
 product_wh = (product_width, product_height)
 product_size = product_wh[0] * product_wh[1] * product_channels
-size_string = "_" + str(product_width) + "_" + str(product_height) + "_"
+size_string = "_" + str(product_width) + "_" + str(product_height)
 
 raw_data_dir = "/vildata/rawdata/Trax/proj_nir_noam/TraxInputData"
-csv_path = raw_data_dir + "/data_filtered.csv"
+csv_path = raw_data_dir + "/data_full.csv"
 probes_dir = raw_data_dir + "/Probes/"
 framed_probes_dir = raw_data_dir + "/FramedProbes/"
 products_dir = raw_data_dir + "/Products" + size_string + "/"
-pickle_path = raw_data_dir + "/trax" + size_string + csv_path.strip(raw_data_dir).strip(".csv").strip("/") + ".pkl"
+pickle_path = raw_data_dir + "/trax" + size_string + "_" + csv_path.strip(raw_data_dir).strip(".csv").strip("/") + ".pkl"
 
 
 pad_type = 'black'  # 'black' or 'noise'
