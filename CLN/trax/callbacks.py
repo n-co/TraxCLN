@@ -74,7 +74,7 @@ class Evaluator(Callback):
 
         f = open(self.log_file_path, 'a')
         now = dt.datetime.now().replace(microsecond=0)
-        f.write("\n%s %4s: " % (now, self.n_epoch))
+        f.write("\n%s %4s " % (now, self.n_epoch))
         # for every available generator, log its results.
         for i in range(len(gens)):
             f.write('       ')

@@ -31,6 +31,8 @@ def process_input_args(argv):
         '-pooling': '0',  # 1 - use max pooling. 0 - dont use max pooling.
         '-seed': '1234',  # used to make random decisions repeat.
         '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
+        '-learning_rate': 0.0001, # learning rate for optimizer.
+        '-number_of_epochs' : 100 #number of epochs to train model.
     }
     # Update args to contain the user's desired configuration.
     i = 1
@@ -54,6 +56,8 @@ def process_input_args(argv):
     # flatmethod
     arg_dict['-seed'] = int(arg_dict['-seed'])
     #opt
+    arg_dict['-learning_rate'] = float(arg_dict['-learning_rate'])
+    arg_dict['-number_of_epochs'] = int(arg_dict['-number_of_epochs'])
     logging.debug("process_input_args: Ended.")
     return arg_dict
 
@@ -72,6 +76,10 @@ def get_global_configuration(argv):
     labels, rel_list, rel_mask, train_ids, valid_ids, test_ids, paths, batches = load_data(global_config['-dataset'])
 
     global_config['-n_classes'] = np.max(labels) + 1
+    global_config['-train_size'] = len(train_ids)
+    global_config['-valid_size'] = len(valid_ids)
+    global_config['-test_size'] = len(test_ids)
+    global_config['-image_padding'] = 'zero_padding'
     labels = to_categorical(labels, global_config['-n_classes'])
 
     logging.debug("get_global_configuration - Ended.")

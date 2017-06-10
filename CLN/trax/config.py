@@ -20,8 +20,8 @@ models_path = "/vildata/derdata/Trax/proj_nir_noam/models/"
 best_models_path = "/vildata/derdata/Trax/proj_nir_noam/best_models/"
 logs_path = "/vildata/derdata/Trax/proj_nir_noam/logs/"
 
-number_of_epochs = 100
-learning_rate = 0.001
+
+
 dropout_ratio = 0.5
 dropout_ration_cnn = 0.2
 bias_factor = 0.1
