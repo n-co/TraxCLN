@@ -32,7 +32,9 @@ def process_input_args(argv):
         '-seed': '1234',  # used to make random decisions repeat.
         '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
         '-learning_rate': 0.0001, # learning rate for optimizer.
-        '-number_of_epochs': 100 #number of epochs to train model.
+        '-number_of_epochs': 100, #number of epochs to train model.
+        '-notes': None
+
     }
     # Update args to contain the user's desired configuration.
     i = 1
