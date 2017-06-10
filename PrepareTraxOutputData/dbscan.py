@@ -1,9 +1,15 @@
-# data =     group of elements
-# min_set =  minimum size of a cluster
-# eps =      epsilon, maximum distance between adjacent elements
-# dist =     distance functions between two elements
-# sort_key = function that extract the key from the element
-def dbscan(data, min_set, eps, dist, sort_key=None):
+def dbscan(data, min_set, radius, dist, sort_key=None):
+    """
+    Generic DBSCAN method "Density-based spatial clustering of applications with noise" that splits the data elements
+    to clusters with defined minimum size. Elements that don't hold a minimum sized cluster considered as noise
+    :param data: an iterable set of elements
+    :param min_set: minimum size for a single cluster
+    :param radius: the max distance between an element to a cluster (or other element), to be considered in the same
+    cluster
+    :param dist: a functions that receives tow elements and returns the distance between them
+    :param sort_key: a function that receives an element, and returns it's sorting value
+    :return: a tuple (clusters, noise), when 'clusters' is list of lists of elements, and 'noise' is list of elements
+    """
     # each cluster is of size >= min_set
     clusters = []
     # list of elements that each can't hold enough neighbours as a cluster
@@ -15,12 +21,12 @@ def dbscan(data, min_set, eps, dist, sort_key=None):
         new_cluster = [curr]
         for cluster in clusters:
             for el in cluster:
-                if dist(curr, el) <= eps:
+                if dist(curr, el) <= radius:
                     exist_clusters.append(cluster)
                     break
 
         for el in noise:
-            if dist(curr, el) <= eps:
+            if dist(curr, el) <= radius:
                 new_cluster.append(el)
 
         if len(exist_clusters) > 0 or len(new_cluster) >= min_set:
@@ -46,16 +52,3 @@ def update_clusters(clusters, noise, exist_clusters, new_cluster):
             new_cluster.append(el)
     clusters.append(new_cluster)
 
-
-# def test_dbscan():
-#     data = [(0, 0), (0, -1), (1, 0)]
-#     eps = 1
-#     dist = lambda x, y: (x[0]-y[0])**2 + (x[1]-y[1])**2
-#     sort_key = lambda x: x
-#
-#     cls, ns = dbscan(data, 2, eps, dist)
-#     print cls
-#     print ns
-
-
-# test_dbscan()

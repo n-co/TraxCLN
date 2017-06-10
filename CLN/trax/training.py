@@ -11,6 +11,7 @@ import datetime as dt
 # GLOBAL VARIABLES
 arg_dict = {}
 
+
 def build_model(paths,rel_list):
     global arg_dict
     logging.debug("build_model: - Started")
