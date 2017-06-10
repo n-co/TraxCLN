@@ -18,7 +18,7 @@ def process_input_args(argv):
     # set default args.
     arg_dict = {
         '-dataset': 'trax_100_300_filtered',  # chosing the learning data set.
-        '-model_type': 'CNN',  # type of NN for each column network. HCNN/CNN
+        '-model_type': 'HCNN',  # type of NN for each column network. HCNN/CNN
         '-batch_type': 'constant',  # constant/random/probe
         '-batch_size': '5',  # batch size for mini-batch version.
         '-constant_batch_size': '128',  # when selecting a constant batch size, this is the one.
@@ -32,7 +32,7 @@ def process_input_args(argv):
         '-seed': '1234',  # used to make random decisions repeat.
         '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
         '-learning_rate': 0.0001, # learning rate for optimizer.
-        '-number_of_epochs' : 100 #number of epochs to train model.
+        '-number_of_epochs': 100 #number of epochs to train model.
     }
     # Update args to contain the user's desired configuration.
     i = 1
