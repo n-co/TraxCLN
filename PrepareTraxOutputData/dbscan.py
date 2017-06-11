@@ -1,10 +1,10 @@
-def dbscan(data, min_set, radius, dist, sort_key=None):
+def dbscan(data, min_set, epsilon, dist, sort_key=None):
     """
-    Generic DBSCAN method "Density-based spatial clustering of applications with noise" that splits the data elements
+    Generic DBSCAN method "density-based spatial clustering of applications with noise" that splits the data elements
     to clusters with defined minimum size. Elements that don't hold a minimum sized cluster considered as noise
     :param data: an iterable set of elements
     :param min_set: minimum size for a single cluster
-    :param radius: the max distance between an element to a cluster (or other element), to be considered in the same
+    :param epsilon: the max distance between an element to a cluster (or other element), to be considered in the same
     cluster
     :param dist: a functions that receives tow elements and returns the distance between them
     :param sort_key: a function that receives an element, and returns it's sorting value
@@ -15,18 +15,18 @@ def dbscan(data, min_set, radius, dist, sort_key=None):
     # list of elements that each can't hold enough neighbours as a cluster
     noise = []
     for curr in data:
-        # clusters that part of them
+        # clusters that curr is close enough to them
         exist_clusters = []
         # new cluster that contains curr, and "noisy" neighbours
         new_cluster = [curr]
         for cluster in clusters:
             for el in cluster:
-                if dist(curr, el) <= radius:
+                if dist(curr, el) <= epsilon:
                     exist_clusters.append(cluster)
                     break
 
         for el in noise:
-            if dist(curr, el) <= radius:
+            if dist(curr, el) <= epsilon:
                 new_cluster.append(el)
 
         if len(exist_clusters) > 0 or len(new_cluster) >= min_set:
