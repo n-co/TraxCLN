@@ -18,7 +18,7 @@ def process_input_args(argv):
     # set default args.
     arg_dict = {
         '-dataset': 'trax_100_300_filtered',  # chosing the learning data set.
-        '-model_type': 'CNN',  # type of NN for each column network. HCNN/CNN
+        '-model_type': 'HCNN',  # type of NN for each column network. HCNN/CNN
         '-batch_type': 'constant',  # constant/random/probe
         '-batch_size': '5',  # batch size for mini-batch version.
         '-constant_batch_size': '128',  # when selecting a constant batch size, this is the one.
@@ -31,20 +31,17 @@ def process_input_args(argv):
         '-pooling': '0',  # 1 - use max pooling. 0 - dont use max pooling.
         '-seed': '1234',  # used to make random decisions repeat.
         '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
-        '-learning_rate': 0.0001,  # learning rate for optimizer.
-        '-number_of_epochs': 100,  # number of epochs to train model.
+        '-learning_rate': 0.0001, # learning rate for optimizer.
+        '-number_of_epochs': 100, #number of epochs to train model.
         '-notes': None
-    }
 
+    }
     # Update args to contain the user's desired configuration.
     i = 1
     while i < len(argv) - 1:
-        key = argv[i]
-        if key == '-notes':
-            arg_dict[key], i = read_notes(argv, i)
-        else:
-            arg_dict[key] = argv[i + 1]
-            i += 2
+        arg_dict[argv[i]] = argv[i + 1]
+        i += 2
+
 
     arg_dict['-saving'] = arg_dict['-dataset'] + '_' + arg_dict['-model_type'] + '_' + arg_dict['-flatmethod'] + '_' + arg_dict['-pooling']
     arg_dict['-dataset']=data_sets_dir + arg_dict['-dataset'] + '.pkl.gz'
@@ -65,18 +62,6 @@ def process_input_args(argv):
     arg_dict['-number_of_epochs'] = int(arg_dict['-number_of_epochs'])
     logging.debug("process_input_args: Ended.")
     return arg_dict
-
-
-def read_notes(argv, i):
-    notes = ''
-    i += 1  # skip index of '-notes' argument
-    while i < len(argv):
-        word = argv[i]
-        if word[0] == '-':
-            break
-        notes += (word + ' ')
-        i += 1
-    return notes, i
 
 
 def get_global_configuration(argv):
