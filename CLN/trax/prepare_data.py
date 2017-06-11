@@ -47,7 +47,7 @@ def process_input_args(argv):
             i += 2
 
 
-    arg_dict['-saving'] = arg_dict['-dataset'] + '_' + arg_dict['-model_type'] + '_' + arg_dict['-flatmethod'] + '_' + arg_dict['-pooling']
+    arg_dict['-saving'] = arg_dict['-dataset'] + '_' + arg_dict['-model_type'] + '_' + arg_dict['-flatmethod'] + '_' + arg_dict['-pooling'] + '_' + arg_dict['-batch_type']
     arg_dict['-dataset']=data_sets_dir + arg_dict['-dataset'] + '.pkl.gz'
     # model type
     # batch type
