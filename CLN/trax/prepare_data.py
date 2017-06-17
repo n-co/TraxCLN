@@ -17,8 +17,8 @@ def process_input_args(argv):
     logging.debug("process_input_args: Started.")
     # set default args.
     arg_dict = {
-        '-dataset': 'trax_100_300_filtered',  # chosing the learning data set.
-        '-model_type': 'HCNN',  # type of NN for each column network. HCNN/CNN
+        '-dataset': 'trax_100_300_full',  # chosing the learning data set.
+        '-model_type': 'CNN',  # type of NN for each column network. HCNN/CNN
         '-batch_type': 'constant',  # constant/random/probe
         '-batch_size': '5',  # batch size for mini-batch version.
         '-constant_batch_size': '128',  # when selecting a constant batch size, this is the one.
@@ -28,7 +28,7 @@ def process_input_args(argv):
         '-nmean': '2',  # regulzation factor. shoule be 1<=nmean<=number_of_relations
         '-dropout': '1',  # 1: use dropout. 0- dont.
         '-flatmethod': 'c',  # 'c' -CNN. 'f' - Flat. else - No Flat.
-        '-pooling': '0',  # 1 - use max pooling. 0 - dont use max pooling.
+        '-pooling': '1',  # 1 - use max pooling. 0 - dont use max pooling.
         '-seed': '1234',  # used to make random decisions repeat.
         '-opt': 'RMS2',  # or Adam. an optimizer for paramater tuning.
         '-learning_rate': 0.0001,  # learning rate for optimizer.
